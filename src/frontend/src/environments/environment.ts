@@ -1,9 +1,9 @@
 export const environment = {
   production: false,
   contracts: {
-    access:     '0x0090c33274dc0f48c20997f8b273f40c5abfa973',
-    registry:   '0x5725ef787b437e398fd7dade7bd3e425bbf81f48',
-    monitoring: '0x7fa54f7616b7e9f9e08b6295ec1df95aa3da00a9',
+    access:     '0xd622b7ca9618b1bdf031af5a6caf34c19f6aa0a2',
+    registry:   '0xdf5eff5019c2177ca752549ecaf6df1f2c297b12',
+    monitoring: '0x938c0c6ee0b4a6e96ff862f89ddf05116dce8e24',
   },
   relayerUrl: 'http://localhost:3000',
   apiUrl: 'https://ambydata-backend.vercel.app',

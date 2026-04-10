@@ -67,6 +67,12 @@
       "chainId": 11155111,
       "deployedAt": "2026-04-10T01:35:15.664Z",
       "broadcastPath": "broadcast\\Deploy.s.sol\\11155111\\run-latest.json"
+    },
+    {
+      "address": "0xd622B7CA9618B1BDf031af5A6Caf34c19F6aa0A2",
+      "chainId": 11155111,
+      "deployedAt": "2026-04-10T03:33:02.343Z",
+      "broadcastPath": "broadcast/Deploy.s.sol/11155111/run-latest.json"
     }
   ]
 }

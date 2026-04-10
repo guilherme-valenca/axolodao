@@ -2,16 +2,16 @@
   "rpcUrl": "https://eth-sepolia.g.alchemy.com/v2/3EiMWpRc_XHmAgaZRYUV6",
   "relayerUrl": "http://localhost:3000",
   "contracts": {
-    "access": "0x0090c33274dc0f48c20997f8b273f40c5abfa973",
-    "registry": "0x5725ef787b437e398fd7dade7bd3e425bbf81f48",
-    "monitoring": "0x7fa54f7616b7e9f9e08b6295ec1df95aa3da00a9"
+    "access": "0xd622b7ca9618b1bdf031af5a6caf34c19f6aa0a2",
+    "registry": "0xdf5eff5019c2177ca752549ecaf6df1f2c297b12",
+    "monitoring": "0x938c0c6ee0b4a6e96ff862f89ddf05116dce8e24"
   },
   "ens": {
     "registry": "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e",
     "resolver": "0xE99638b40E4Fff0129D56f03b55b6bbC4BBE49b5"
   },
   "privateKeys": {
-    "admin": "addec8dde3582510521133059023a159f9de40158193722df0540c02f250aade",
+    "admin": "e2204c74372eedf194950626479412e429ad78c80b2386cf1140353ab292922a",
     "gerente": "97e39f0108439126adf62e355b139ac3cbc402c24ba0c960be55bcfac6f24596",
     "cuidador": "1a9566d4af426b7958f4e50640600bd61265373a0e76e23be9d99253f70a1a3d",
     "auditor": "dabe70586dc1558ec94537e03b9802d4c869525d01db4c4ae35bafe915faaebb"
