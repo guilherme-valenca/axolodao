@@ -4,7 +4,7 @@
 // ║  usando ERC2771Context + RELAYER_WALLET como trustedForwarder.            ║
 // ╚═══════════════════════════════════════════════════════════════════════════╝
 
-require('dotenv').config();
+require('dotenv').config({ override: true });
 const express = require('express');
 const cors    = require('cors');
 const path    = require('path');
