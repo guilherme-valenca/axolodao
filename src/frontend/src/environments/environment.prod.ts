@@ -8,7 +8,7 @@ export const environment = {
     registry:   '0x5725ef787b437e398fd7dade7bd3e425bbf81f48',
     monitoring: '0x7fa54f7616b7e9f9e08b6295ec1df95aa3da00a9',
   },
-  relayerUrl: 'https://RELAYER_URL.up.railway.app',
+  relayerUrl: 'https://glistening-appreciation-production-303b.up.railway.app',
   apiUrl: 'https://ambydata-backend.vercel.app',
   useIndexer: true,
   chainId: 11155111,
