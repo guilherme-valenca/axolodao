@@ -1,0 +1,475 @@
+<div class="dashboard-content">
+      @if (menuAtivoLateral === 'home' && cargoUsuario === 'admin') {
+        <!-- ═══ ADMIN DASHBOARD ═══ -->
+        <div class="admin-dashboard">
+          <h2 class="admin-section-title">Painel Administrativo</h2>
+
+          <!-- Lista de Instituições -->
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <h3>Instituições Ativas</h3>
+              <span class="admin-badge">{{ instituicoesAtivas.length }}</span>
+            </div>
+            <div class="admin-card-body">
+              @if (instituicoesAtivas.length === 0) {
+                <p class="admin-empty">Nenhuma instituição ativa no momento.</p>
+              } @else {
+                <div class="admin-table-wrap">
+                  <table class="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Label</th>
+                        <th>Role</th>
+                        <th>Gerente</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (inst of instituicoesAtivas; track inst.node) {
+                        <tr>
+                          <td class="mono">{{ inst.label }}</td>
+                          <td><span class="role-chip" [ngClass]="inst.role === 'CARETAKER' ? 'role-caretaker' : 'role-auditor'">{{ inst.role }}</span></td>
+                          <td class="mono">{{ inst.gerente.slice(0, 6) }}...{{ inst.gerente.slice(-4) }}</td>
+                          <td>
+                            @if (inst.ativa) {
+                              <span class="status-ativa">Ativa</span>
+                            } @else {
+                              <span class="status-inativa">Inativa</span>
+                            }
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <h3>Histórico de Instituições Desativadas</h3>
+              <span class="admin-badge">{{ instituicoesHistorico.length }}</span>
+            </div>
+            <div class="admin-card-body">
+              @if (instituicoesHistorico.length === 0) {
+                <p class="admin-empty">Nenhuma instituição desativada no histórico.</p>
+              } @else {
+                <div class="admin-table-wrap">
+                  <table class="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Label</th>
+                        <th>Role</th>
+                        <th>Gerente</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (inst of instituicoesHistorico; track inst.node) {
+                        <tr>
+                          <td class="mono">{{ inst.label }}</td>
+                          <td><span class="role-chip" [ngClass]="inst.role === 'CARETAKER' ? 'role-caretaker' : 'role-auditor'">{{ inst.role }}</span></td>
+                          <td class="mono">{{ inst.gerente.slice(0, 6) }}...{{ inst.gerente.slice(-4) }}</td>
+                          <td><span class="status-inativa">Histórico / Inativa</span></td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="admin-panels-grid">
+            <!-- Adicionar Instituição -->
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <h3>Adicionar Instituição</h3>
+              </div>
+              <div class="admin-card-body">
+                <div class="admin-form">
+                  <div class="form-field">
+                    <label>Label</label>
+                    <input type="text" [(ngModel)]="novaInstLabel" placeholder="Ex: usp, biomuseu" (input)="atualizarNodePreview('adicionar')" />
+                  </div>
+                  <div class="form-field">
+                    <label>Role</label>
+                    <select [(ngModel)]="novaInstRole">
+                      <option value="caretaker">CARETAKER</option>
+                      <option value="auditor">AUDITOR</option>
+                    </select>
+                  </div>
+                  <div class="form-field">
+                    <label>Endereço do Gerente</label>
+                    <input type="text" [(ngModel)]="novaInstGerente" placeholder="0x..." />
+                  </div>
+                  @if (novaInstNodePreview) {
+                    <div class="form-field">
+                      <label>Node (preview)</label>
+                      <input type="text" [value]="novaInstNodePreview" readonly class="readonly-field" />
+                    </div>
+                  }
+                  <button class="admin-btn admin-btn-primary" (click)="adicionarNovaInstituicao()" [disabled]="adminInstCarregando">
+                    {{ adminInstCarregando ? 'Processando...' : 'Adicionar Instituição' }}
+                  </button>
+                  @if (adminInstLog) {
+                    <div class="admin-log">{{ adminInstLog }}</div>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- Desativar Instituição -->
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <h3>Desativar Instituição</h3>
+              </div>
+              <div class="admin-card-body">
+                <div class="admin-form">
+                  <div class="form-field">
+                    <label>Label</label>
+                    <input type="text" [(ngModel)]="desativarInstLabel" placeholder="Ex: labtest" (input)="atualizarNodePreview('desativar')" />
+                  </div>
+                  @if (desativarInstNodePreview) {
+                    <div class="form-field">
+                      <label>Node (preview)</label>
+                      <input type="text" [value]="desativarInstNodePreview" readonly class="readonly-field" />
+                    </div>
+                  }
+                  <button class="admin-btn admin-btn-danger" (click)="desativarInstituicao()" [disabled]="adminDesativarCarregando">
+                    {{ adminDesativarCarregando ? 'Processando...' : 'Desativar' }}
+                  </button>
+                  @if (adminDesativarLog) {
+                    <div class="admin-log">{{ adminDesativarLog }}</div>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- Consultar Instituição -->
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <h3>Consultar Instituição</h3>
+              </div>
+              <div class="admin-card-body">
+                <div class="admin-form">
+                  <div class="form-field">
+                    <label>Label</label>
+                    <input type="text" [(ngModel)]="consultarInstLabel" placeholder="Ex: labtest" />
+                  </div>
+                  <button class="admin-btn admin-btn-secondary" (click)="consultarInstituicao()">Consultar</button>
+                  @if (consultarResultado) {
+                    <div class="admin-result">
+                      <div class="result-row"><span class="result-label">Label:</span> <span class="mono">{{ consultarResultado.label }}</span></div>
+                      <div class="result-row"><span class="result-label">Role:</span> {{ consultarResultado.role }}</div>
+                      <div class="result-row"><span class="result-label">Ativa:</span>
+                        @if (consultarResultado.ativa) {
+                          <span class="status-ativa">Sim</span>
+                        } @else {
+                          <span class="status-inativa">Não</span>
+                        }
+                      </div>
+                      @if (!consultarResultado.ativa) {
+                        <div class="result-row">
+                          <span class="result-label">Situação:</span>
+                          <span class="status-inativa">Registro histórico / instituição desativada</span>
+                        </div>
+                      }
+                      <div class="result-row"><span class="result-label">Gerente:</span> <span class="mono">{{ consultarResultado.gerente }}</span></div>
+                      <div class="result-row"><span class="result-label">Node:</span> <span class="mono result-node">{{ consultarResultado.parentNode }}</span></div>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Verificar Roles -->
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <h3>Verificar Roles</h3>
+            </div>
+            <div class="admin-card-body">
+              <div class="admin-form admin-form-inline">
+                <div class="form-field form-field-grow">
+                  <label>Endereço</label>
+                  <input type="text" [(ngModel)]="verificarRolesEndereco" placeholder="0x..." />
+                </div>
+                <button class="admin-btn admin-btn-secondary admin-btn-sm" (click)="usarMeuEndereco()">Usar meu</button>
+                <button class="admin-btn admin-btn-primary admin-btn-sm" (click)="verificarRoles()">Verificar</button>
+              </div>
+              @if (verificarRolesResultado) {
+                <div class="admin-roles-result">
+                  <span class="role-check" [ngClass]="verificarRolesResultado.isAdmin ? 'role-yes' : 'role-no'">DEFAULT_ADMIN: {{ verificarRolesResultado.isAdmin ? 'Sim' : 'Não' }}</span>
+                  <span class="role-check" [ngClass]="verificarRolesResultado.isCaretaker ? 'role-yes' : 'role-no'">CARETAKER: {{ verificarRolesResultado.isCaretaker ? 'Sim' : 'Não' }}</span>
+                  <span class="role-check" [ngClass]="verificarRolesResultado.isAuditor ? 'role-yes' : 'role-no'">AUDITOR: {{ verificarRolesResultado.isAuditor ? 'Sim' : 'Não' }}</span>
+                  @if (verificarRolesResultado.ensName) {
+                    <span class="role-check role-ens">ENS: {{ verificarRolesResultado.ensName }}</span>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (menuAtivoLateral === 'home' && cargoUsuario !== 'admin') {
+        <!-- Badge de Fonte dos Dados -->
+        @if (fonteDosDados) {
+          <div class="data-source-badge" [ngClass]="fonteDosDados === 'indexador' ? 'source-indexador' : 'source-blockchain'">
+            {{ fonteDosDados === 'indexador' ? 'Dados via Indexador' : 'Dados via Blockchain' }}
+          </div>
+        }
+
+        <!-- Filters -->
+        <div class="filters-container">
+          <div class="filters-group">
+            <button
+              type="button"
+              [ngClass]="filtroHome === 'ultimo-acesso' ? 'filter-btn-active' : 'filter-btn'"
+              (click)="setFiltroHome('ultimo-acesso')"
+            >
+              <lucide-icon [img]="ClockIcon" size="18"></lucide-icon> &Uacute;ltimo acesso
+            </button>
+            <button
+              type="button"
+              [ngClass]="filtroHome === 'axolotes' ? 'filter-btn-active' : 'filter-btn'"
+              (click)="setFiltroHome('axolotes')"
+            >
+              <lucide-icon [img]="MicroscopeIcon" size="18"></lucide-icon> Axolote
+            </button>
+            <button
+              type="button"
+              [ngClass]="filtroHome === 'tanques' ? 'filter-btn-active' : 'filter-btn'"
+              (click)="setFiltroHome('tanques')"
+            >
+              <lucide-icon [img]="WavesIcon" size="18"></lucide-icon> Tanques
+            </button>
+          </div>
+        </div>
+
+        @if (filtroHome === 'ultimo-acesso') {
+          <div class="home-tanks-block">
+            <div #tanksCarousel class="tanks-carousel hide-scrollbar">
+              @for (tanqueId of tanquesExibicao; track tanqueId) {
+                <div class="tank-container">
+                  <div class="tank-header">
+                    <h3 class="tank-title">Tanque {{ tanqueId }}</h3>
+                    <div class="tank-stats">{{ getResumoTanque(tanqueId) }}</div>
+                  </div>
+                  <div
+                    class="axolotes-carousel"
+                    (mousedown)="iniciarArrasteCarrossel($event)"
+                    (mousemove)="moverArrasteCarrossel($event)"
+                    (mouseup)="finalizarArrasteCarrossel()"
+                    (mouseleave)="finalizarArrasteCarrossel()"
+                  >
+                    @for (axolote of getAxolotesPorTanque(tanqueId); track axolote.nome) {
+                      <div
+                        class="axolote-card axolote-card-clickable"
+                        role="button"
+                        tabindex="0"
+                        (click)="abrirPaginaAxolotes(axolote.nome)"
+                        (keydown.enter)="abrirPaginaAxolotes(axolote.nome)"
+                        (keydown.space)="abrirPaginaAxolotes(axolote.nome); $event.preventDefault()"
+                      >
+                        <img [src]="getImagemAxolote(axolote.imagem)" [alt]="axolote.nome" (error)="onAxoloteImgError($event)" class="axolote-img" />
+                        <div class="axolote-info">
+                          <span class="axolote-nome">{{ axolote.nome }}</span>
+                          <span class="axolote-especie">{{ axolote.especie }}</span>
+                          <span class="axolote-badge">Est&aacute;vel</span>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+        }
+
+        @if (filtroHome === 'axolotes') {
+          <div class="home-tanks-block">
+            <div class="tank-header">
+              <h3 class="tank-title">Axolotes</h3>
+              <div class="tank-stats">{{ axolotesExibicao.length }} registrados</div>
+            </div>
+            <div
+              class="axolotes-carousel hide-scrollbar"
+              (mousedown)="iniciarArrasteCarrossel($event)"
+              (mousemove)="moverArrasteCarrossel($event)"
+              (mouseup)="finalizarArrasteCarrossel()"
+              (mouseleave)="finalizarArrasteCarrossel()"
+            >
+              @for (axolote of axolotesExibicao; track axolote.nome) {
+                <div
+                  class="axolote-card axolote-card-clickable"
+                  role="button"
+                  tabindex="0"
+                  (click)="abrirPaginaAxolotes(axolote.nome)"
+                  (keydown.enter)="abrirPaginaAxolotes(axolote.nome)"
+                  (keydown.space)="abrirPaginaAxolotes(axolote.nome); $event.preventDefault()"
+                >
+                  <img [src]="getImagemAxolote(axolote.imagem)" [alt]="axolote.nome" (error)="onAxoloteImgError($event)" class="axolote-img" />
+                  <div class="axolote-info">
+                    <span class="axolote-nome">{{ axolote.nome }}</span>
+                    <span class="axolote-especie">{{ axolote.especie }}</span>
+                    <span class="axolote-badge">Est&aacute;vel</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        @if (filtroHome === 'tanques') {
+          <div class="tank-summary-grid">
+            @for (tanqueId of tanquesExibicao; track tanqueId) {
+              <div class="tank-summary-card">
+                <div class="tank-header">
+                  <h3 class="tank-title">Tanque {{ tanqueId }}</h3>
+                  <div class="tank-stats">{{ getContagemAxolotesPorTanque(tanqueId) }} axolotes</div>
+                </div>
+                <p class="tank-summary-metrics">{{ getResumoDetalhadoTanque(tanqueId) }}</p>
+                <div class="tank-summary-tags">
+                  @for (axolote of getAxolotesPorTanque(tanqueId); track axolote.nome) {
+                    <span class="tank-summary-tag tank-summary-tag-clickable" (click)="abrirPaginaAxolotes(axolote.nome)">{{ axolote.nome }}</span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- ═══ Medições Pendentes (Auditor) ═══ -->
+        @if (authService.isAuditor && medicoesPendentes.length > 0) {
+          <div class="pendentes-section">
+            <h3 class="pendentes-title">Medições Pendentes de Validação</h3>
+            <div class="pendentes-grid">
+              @for (med of medicoesPendentes; track med.id) {
+                <div class="pendente-card">
+                  <div class="pendente-header">
+                    <span class="pendente-id">#{{ med.id }}</span>
+                    <span class="badge-pendente">Pendente</span>
+                  </div>
+                  <h4 class="pendente-tanque">{{ med.nomeTanque }}</h4>
+                  <div class="pendente-params">
+                    <span>Temp: <strong>{{ med.temperatura }}°C</strong></span>
+                    <span>pH: <strong>{{ med.ph }}</strong></span>
+                    <span>O₂: <strong>{{ med.oxigenioDissolvido }}</strong></span>
+                    <span>NH₃: <strong>{{ med.amonia }}</strong></span>
+                  </div>
+                  <p class="pendente-data">{{ med.dataFormatada }}</p>
+                  <button class="btn-avaliar" (click)="abrirAuditoria(med)">Avaliar Medição</button>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Bottom Grid -->
+        <div class="bottom-grid">
+          <!-- HistÃƒÂ³rico de Monitoramento -->
+          <div class="history-card">
+            <h3 class="history-title">Histórico de Monitoramento</h3>
+            
+            <div class="timeline-container">
+              @for (medicao of historicoMonitoramento; track medicao.id) {
+                <div class="timeline-item">
+                  <div class="timeline-dot"></div>
+                  <div class="timeline-content">
+                    <div>
+                      <h4 class="timeline-header">Medição de Água</h4>
+                      <p class="timeline-text">{{ medicao.nomeTanque }}</p>
+                      <p class="timeline-text">
+                        Temperatura <span class="timeline-text-bold">{{ medicao.temperatura }}°C</span>
+                        | pH <span class="timeline-text-bold">{{ medicao.ph }}</span>
+                        | Oxigênio <span class="timeline-text-bold">{{ medicao.oxigenioDissolvido }} mg/L</span>
+                      </p>
+                    </div>
+                    <div class="timeline-right">
+                      <span [class]="getBadgeClasse(medicao.status)">{{ medicao.statusTexto }}</span>
+                      <p class="timeline-meta">{{ medicao.dataFormatada }}<br>{{ medicao.responsavel }}</p>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Histórico de alertas -->
+          <div class="history-card">
+            <h3 class="history-title">Histórico de alertas</h3>
+            
+            <div class="alerts-container">
+              @for (alerta of historicoAlertas; track $index) {
+                <div class="alert-item" [ngClass]="{
+                    'alert-red': alerta.nivel === 'red',
+                    'alert-green': alerta.nivel === 'green',
+                    'alert-yellow': alerta.nivel === 'yellow'
+                  }">
+                  <div class="alert-icon-wrapper" [ngClass]="{
+                      'alert-icon-red': alerta.nivel === 'red',
+                      'alert-icon-green': alerta.nivel === 'green',
+                      'alert-icon-yellow': alerta.nivel === 'yellow'
+                    }">
+                    @if (alerta.nivel === 'red') {
+                      <lucide-icon [img]="XIcon" size="18"></lucide-icon>
+                    }
+                    @if (alerta.nivel === 'green') {
+                      <lucide-icon [img]="CheckIcon" size="18"></lucide-icon>
+                    }
+                    @if (alerta.nivel === 'yellow') {
+                      <lucide-icon [img]="AlertTriangleIcon" size="18"></lucide-icon>
+                    }
+                  </div>
+                  <div>
+                    <h4 class="alert-title" [ngClass]="{
+                        'alert-title-red': alerta.nivel === 'red',
+                        'alert-title-green': alerta.nivel === 'green',
+                        'alert-title-yellow': alerta.nivel === 'yellow'
+                      }">{{ alerta.titulo }}</h4>
+                    <p class="alert-text" [ngClass]="{
+                        'alert-text-red': alerta.nivel === 'red',
+                        'alert-text-green': alerta.nivel === 'green',
+                        'alert-text-yellow': alerta.nivel === 'yellow'
+                      }"><span class="alert-text-bold">{{ alerta.tanque }}:</span> {{ alerta.texto }}</p>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Other Routes -->
+      @if (menuAtivoLateral === 'tanques') {
+        <app-tanques (axoloteSelecionado)="abrirAxolotePeloTanque($event)"></app-tanques>
+      }
+      @if (menuAtivoLateral === 'axolotes') {
+        <app-axolotes [axolotePreferidoId]="axolotePreferidoId" [axolotePreferidoNome]="axolotePreferidoNome"></app-axolotes>
+      }
+      @if (menuAtivoLateral === 'cadastro-axolote') {
+        <app-cadastro-axolote (axoloteCadastrado)="navegarMenuLateral('axolotes')"></app-cadastro-axolote>
+      }
+      @if (menuAtivoLateral === 'cadastro-tanque') {
+        <app-cadastro-tanque (tanqueCadastrado)="navegarMenuLateral('tanques')"></app-cadastro-tanque>
+      }
+      @if (menuAtivoLateral === 'monitoramento' || menuAtivoLateral === 'validacao') {
+        <app-monitoramento
+          [medicaoParaAvaliar]="medicaoSelecionada"
+          [cargoUsuario]="cargoUsuario"
+          [medicoesPendentes]="medicoesPendentes"
+          (selecionarMedicao)="abrirAuditoria($event)"
+          (fecharAuditoria)="voltarDaAuditoria()">
+        </app-monitoramento>
+      }
+      @if (menuAtivoLateral === 'registro-membro') {
+        <app-registro-membro></app-registro-membro>
+      }
+      @if (menuAtivoLateral === 'diagnostico') {
+        <app-admin-diagnostico></app-admin-diagnostico>
+      }
+    </div>

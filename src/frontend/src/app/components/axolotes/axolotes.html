@@ -1,0 +1,196 @@
+<div class="axolotes-page">
+  <div class="empty-state" *ngIf="!carregando && axolotesRegistrados.length === 0 && !erroCarregamento">
+    <p>Nenhum axolote registrado. Vá em "Cadastro" para adicionar o primeiro.</p>
+  </div>
+
+  <div class="empty-state" *ngIf="!carregando && erroCarregamento">
+    <p>{{ erroCarregamento }}</p>
+  </div>
+
+  <p *ngIf="carregando" class="loading-text">Buscando genéticas...</p>
+
+  <!-- Search bar and filters -->
+  <div class="search-bar" *ngIf="!carregando && !erroCarregamento && axolotesRegistrados.length > 0">
+    <div class="search-group">
+      <input type="number" placeholder="Buscar por ID" [(ngModel)]="buscaId" class="search-input" (keydown.enter)="buscarPorId()">
+      <button class="btn-search" (click)="buscarPorId()">Buscar</button>
+    </div>
+    <div class="search-group">
+      <select [(ngModel)]="filtroTanqueId" class="filter-select">
+        <option [ngValue]="null">Todos os tanques</option>
+        <option *ngFor="let t of tanquesAtivos" [ngValue]="t.id">#{{ t.id }} — {{ t.name }}</option>
+      </select>
+    </div>
+    <button class="btn-voltar-gallery" *ngIf="detalheAberto" (click)="voltarParaGaleria()">&larr; Voltar</button>
+  </div>
+
+  <!-- Gallery -->
+  <div class="gallery-section" *ngIf="!carregando && !erroCarregamento && !detalheAberto && axolotesRegistrados.length > 0">
+    <div class="axolotes-grid">
+      <button
+        *ngFor="let axolote of axolotesFiltrados"
+        type="button"
+        class="axolote-card"
+        (click)="selecionarAxolote(axolote.id)"
+      >
+        <img [src]="axolote.img" [alt]="axolote.name" class="axolote-img" />
+        <div class="axolote-info">
+          <span class="axolote-nome">{{ axolote.name }}</span>
+          <span class="axolote-especie">{{ axolote.species }}</span>
+          <span class="axolote-badge">Estável</span>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Detail view -->
+  <div class="details-layout" *ngIf="detalheAberto && axoloteAtual">
+    <div class="main-column">
+      <div class="profile-card">
+        <div class="profile-image-col">
+          <img [src]="axoloteAtual.img" alt="Foto do axolote" class="axolote-photo" />
+          <span class="id-tag">ID: AXO {{ axoloteAtual.id }}</span>
+        </div>
+
+        <div class="profile-info-col">
+          <!-- Normal view -->
+          <ng-container *ngIf="!editando">
+            <div class="info-header">
+              <h2 class="axolote-name-detail">{{ axoloteAtual.name }}</h2>
+              <p class="axolote-species">{{ axoloteAtual.species }}</p>
+            </div>
+
+            <p class="axolote-birth">
+              <strong>Data de nascimento:</strong> {{ axoloteAtual.birthDate }}
+            </p>
+
+            <div class="metrics-list">
+              <div class="metric-item">
+                <strong>Morfologia:</strong>
+                <span class="metric-value">{{ axoloteAtual.morphData }}</span>
+              </div>
+              <div class="metric-item">
+                <strong>Tanque:</strong>
+                <span class="metric-value">Tanque #{{ axoloteAtual.tankId }}</span>
+              </div>
+              <div class="metric-item">
+                <strong>Registrado por:</strong>
+                <span class="metric-value metric-addr">{{ encurtarEndereco(axoloteAtual.registeredBy) }}</span>
+              </div>
+              <div class="metric-item" *ngIf="isAttestationValid(axoloteAtual.attestationUID)">
+                <strong>Atestação EAS:</strong>
+                <a class="eas-link" [href]="'https://sepolia.easscan.org/attestation/view/' + axoloteAtual.attestationUID" target="_blank" rel="noopener noreferrer">
+                  {{ encurtarEndereco(axoloteAtual.attestationUID) }}
+                </a>
+              </div>
+            </div>
+
+            <!-- Action buttons (caretaker only) -->
+            <div class="action-buttons" *ngIf="authService.isCaretaker">
+              <button class="btn-action btn-edit" (click)="iniciarEdicao()" [disabled]="enviandoTx">Editar</button>
+              <button class="btn-action btn-transfer" (click)="iniciarTransferencia()" [disabled]="enviandoTx">Transferir</button>
+              <button class="btn-action btn-deactivate" (click)="desativarAxolote()" [disabled]="enviandoTx">Desativar</button>
+            </div>
+          </ng-container>
+
+          <!-- Edit mode -->
+          <ng-container *ngIf="editando">
+            <div class="edit-form">
+              <div class="edit-group">
+                <label>Nome</label>
+                <input type="text" [(ngModel)]="editNome" class="edit-input">
+              </div>
+              <div class="edit-group">
+                <label>Morfologia</label>
+                <input type="text" [(ngModel)]="editMorfologia" class="edit-input">
+              </div>
+              <div class="edit-group">
+                <label>Hash da Foto</label>
+                <input type="text" [(ngModel)]="editPhotoHash" class="edit-input edit-mono" placeholder="Manter atual se vazio">
+              </div>
+              <div class="edit-actions">
+                <button class="btn-action btn-confirm" (click)="salvarEdicao()" [disabled]="enviandoTx">
+                  {{ enviandoTx ? 'Salvando...' : 'Salvar' }}
+                </button>
+                <button class="btn-action btn-cancel" (click)="cancelarEdicao()">Cancelar</button>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- Transfer mode -->
+          <ng-container *ngIf="transferindo">
+            <div class="edit-form">
+              <p class="transfer-label">Transferir "{{ axoloteAtual.name }}" para:</p>
+              <div class="edit-group">
+                <label>Tanque destino</label>
+                <select [(ngModel)]="transferTanqueId" class="edit-input">
+                  <option [ngValue]="null" disabled>Selecione o tanque</option>
+                  <option *ngFor="let t of tanquesAtivos" [ngValue]="t.id" [disabled]="t.id === axoloteAtual.tankId">
+                    #{{ t.id }} — {{ t.name }}
+                  </option>
+                </select>
+              </div>
+              <div class="edit-actions">
+                <button class="btn-action btn-confirm" (click)="confirmarTransferencia()" [disabled]="enviandoTx || !transferTanqueId">
+                  {{ enviandoTx ? 'Transferindo...' : 'Confirmar' }}
+                </button>
+                <button class="btn-action btn-cancel" (click)="cancelarTransferencia()">Cancelar</button>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+
+      <!-- Monitoring history -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>Últimos registros de monitoramento</h3>
+          <div class="history-actions">
+            <label for="filtroPeriodoAxo" class="history-label">Período</label>
+            <select id="filtroPeriodoAxo" class="dropdown-btn" [(ngModel)]="filtroPeriodo">
+              <option value="24h">Últimas 24h</option>
+              <option value="7d">Últimos 7 dias</option>
+              <option value="30d">Últimos 30 dias</option>
+              <option value="all">Todo período</option>
+            </select>
+          </div>
+        </div>
+
+        <p *ngIf="carregandoHistorico" class="helper-text">Sincronizando sensores...</p>
+
+        <div class="history-table-wrapper" *ngIf="!carregandoHistorico && registrosMonitoramentoFiltrados.length > 0">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Temp (°C)</th>
+                <th>pH</th>
+                <th>O₂ (mg/L)</th>
+                <th>NH₃ (mg/L)</th>
+                <th>NO₂ (mg/L)</th>
+                <th>Alertas</th>
+                <th>Responsável</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of registrosMonitoramentoFiltrados">
+                <td>{{ item.dataCompleta }}</td>
+                <td>{{ item.temperatura }}</td>
+                <td>{{ item.ph }}</td>
+                <td>{{ item.oxigenioDissolvido }}</td>
+                <td>{{ item.amonia }}</td>
+                <td>{{ item.nitritos }}</td>
+                <td>{{ item.alertasForaPadrao }}</td>
+                <td>{{ item.responsavel }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="chart-image-placeholder" *ngIf="!carregandoHistorico && registrosMonitoramentoFiltrados.length === 0">
+          <p class="chart-placeholder-text">Nenhum registro encontrado para o período selecionado.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

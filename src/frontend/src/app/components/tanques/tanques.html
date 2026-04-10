@@ -1,0 +1,289 @@
+<div class="tanques-layout">
+
+  <div class="main-column">
+    @if (carregandoTanques()) {
+      <p class="loading-feedback">Carregando tanques na blockchain...</p>
+    }
+
+    @if (!carregandoTanques() && tanques.length > 0) {
+      <!-- Tank table overview -->
+      <div class="tank-table-card">
+        <h3 class="table-title">Todos os Tanques</h3>
+        <div class="table-wrapper hide-scrollbar">
+          <table class="tank-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Localização</th>
+                <th>Registrado por</th>
+                <th>Data</th>
+                <th>Status</th>
+                <th>Axolotes</th>
+                <th>Atestação EAS</th>
+                @if (authService.isCaretaker) {
+                  <th>Ações</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (tanque of tanques; track tanque.id) {
+                <tr [class.row-inactive]="!tanque.active">
+                  <td>#{{ tanque.id }}</td>
+                  <td>
+                    @if (editandoTanqueId === tanque.id) {
+                      <input type="text" [(ngModel)]="editNome" class="edit-input">
+                    } @else {
+                      {{ tanque.name }}
+                    }
+                  </td>
+                  <td>
+                    @if (editandoTanqueId === tanque.id) {
+                      <input type="text" [(ngModel)]="editLocalizacao" class="edit-input">
+                    } @else {
+                      {{ tanque.location }}
+                    }
+                  </td>
+                  <td class="td-addr">{{ encurtarEndereco(tanque.registeredBy) }}</td>
+                  <td>{{ tanque.registeredAt | date:'dd/MM/yyyy' }}</td>
+                  <td>
+                    <span class="status-badge" [class.badge-active]="tanque.active" [class.badge-inactive]="!tanque.active">
+                      {{ tanque.active ? 'Ativo' : 'Inativo' }}
+                    </span>
+                  </td>
+                  <td>{{ tanque.axolotlCount }}</td>
+                  <td>
+                    @if (isAttestationValid(tanque.attestationUID)) {
+                      <a class="eas-link" [href]="'https://sepolia.easscan.org/attestation/view/' + tanque.attestationUID" target="_blank" rel="noopener noreferrer">
+                        {{ encurtarEndereco(tanque.attestationUID) }}
+                      </a>
+                    } @else {
+                      <span class="text-muted">—</span>
+                    }
+                  </td>
+                  @if (authService.isCaretaker) {
+                    <td class="td-actions">
+                      @if (editandoTanqueId === tanque.id) {
+                        <button class="btn-icon btn-confirm" (click)="atualizarTanque()" [disabled]="enviandoTx" title="Confirmar">
+                          <lucide-icon [img]="CheckIcon" [size]="16"></lucide-icon>
+                        </button>
+                        <button class="btn-icon btn-cancel" (click)="cancelarEdicao()" title="Cancelar">
+                          <lucide-icon [img]="XIcon" [size]="16"></lucide-icon>
+                        </button>
+                      } @else if (tanque.active) {
+                        <button class="btn-icon btn-edit" (click)="iniciarEdicao(tanque)" title="Editar">
+                          <lucide-icon [img]="PencilIcon" [size]="16"></lucide-icon>
+                        </button>
+                        <button class="btn-icon btn-delete" (click)="desativarTanque(tanque.id)" [disabled]="enviandoTx" title="Desativar">
+                          <lucide-icon [img]="Trash2Icon" [size]="16"></lucide-icon>
+                        </button>
+                      }
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tank selector pills -->
+      <div class="tank-selector">
+        @for (tanque of tanques; track tanque.id) {
+          @if (tanque.active) {
+            <button
+              class="tank-pill"
+              [class.active]="tanqueSelecionadoId === tanque.id"
+              (click)="selecionarTanque(tanque.id)"
+            >
+              <lucide-icon [img]="WavesIcon" [size]="18"></lucide-icon>
+              {{ tanque.name }}
+            </button>
+          }
+        }
+      </div>
+
+      <div class="tank-dashboard">
+        @if (carregandoDetalhes() || carregandoMedicao) {
+          <p class="loading-feedback">Buscando sensores na rede...</p>
+        }
+
+        @if (!carregandoDetalhes() && !carregandoMedicao && ultimaMedicao) {
+          <div class="tank-header-card">
+            <img src="assets/axolotes-loginPage.png" alt="Aquário" class="tank-main-img">
+
+            <div class="tank-status-info">
+              <div class="info-row-top">
+                <div class="info-text-group">
+                  <p class="medicao-texto"><strong>Última medição:</strong> Hoje - {{ ultimaMedicao.dataHora }}</p>
+                  <p class="medicao-texto"><strong>Responsável:</strong> {{ ultimaMedicao.responsavel }}</p>
+                </div>
+                <a href="https://www.youtube.com/@Xolotlcalli/streams" target="_blank" rel="noopener noreferrer" class="btn-live-feed" title="Acompanhar transmissão ao vivo">
+                  <svg viewBox="0 0 24 24" fill="#FF0000" width="40" height="40">
+                    <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                  </svg>
+                </a>
+              </div>
+
+              <h4 class="status-title">Status do sistema</h4>
+              <div class="status-list">
+                <div class="status-item">
+                  <lucide-icon [img]="ThermometerIcon" [size]="20" class="status-icon-teal"></lucide-icon>
+                  <span><strong>Temperatura:</strong> <span class="text-gray">{{ temperaturaLabel }}</span></span>
+                </div>
+                <div class="status-item">
+                  <lucide-icon [img]="DropletsIcon" [size]="20" class="status-icon-teal"></lucide-icon>
+                  <span><strong>Qualidade da água:</strong> <span class="text-yellow">{{ qualidadeAguaLabel }}</span></span>
+                </div>
+                <div class="status-item">
+                  <lucide-icon [img]="AlertTriangleIcon" [size]="20" class="status-icon-yellow"></lucide-icon>
+                  <span><strong>Alertas:</strong> <span class="text-gray">{{ ultimaMedicao.alertasForaPadrao }} parâmetro(s) fora do esperado</span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <p class="metric-title">Temperatura</p>
+              <h2 class="metric-value">{{ ultimaMedicao.temperatura }}°C</h2>
+              <div class="metric-badge" [ngClass]="getBadgeClasseParametro('temperatura')">
+                <span class="badge-text">{{ getBadgeTextoParametro('temperatura') }}</span>
+                <span class="badge-subtext">{{ getBadgeFaixaParametro('temperatura') }}</span>
+              </div>
+            </div>
+
+            <div class="metric-card">
+              <p class="metric-title">pH</p>
+              <h2 class="metric-value">{{ ultimaMedicao.ph }}</h2>
+              <div class="metric-badge" [ngClass]="getBadgeClasseParametro('ph')">
+                <span class="badge-text">{{ getBadgeTextoParametro('ph') }}</span>
+                <span class="badge-subtext">{{ getBadgeFaixaParametro('ph') }}</span>
+              </div>
+            </div>
+
+            <div class="metric-card">
+              <p class="metric-title">Amônia</p>
+              <h2 class="metric-value">{{ ultimaMedicao.amonia }}</h2>
+              <div class="metric-badge" [ngClass]="getBadgeClasseParametro('amonia')">
+                <span class="badge-text">{{ getBadgeTextoParametro('amonia') }}</span>
+                <span class="badge-subtext">{{ getBadgeFaixaParametro('amonia') }}</span>
+              </div>
+            </div>
+
+            <div class="metric-card">
+              <p class="metric-title">Nitritos</p>
+              <h2 class="metric-value">{{ ultimaMedicao.nitritos }}</h2>
+              <div class="metric-badge" [ngClass]="getBadgeClasseParametro('nitritos')">
+                <span class="badge-text">{{ getBadgeTextoParametro('nitritos') }}</span>
+                <span class="badge-subtext">{{ getBadgeFaixaParametro('nitritos') }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="history-card" id="grafico-tanque">
+            <div class="history-header">
+              <h3 class="history-title">Últimos registros de monitoramento</h3>
+              <div class="history-actions">
+                <label for="filtroPeriodo" class="history-label">Período</label>
+                <select id="filtroPeriodo" class="dropdown-select" [(ngModel)]="filtroPeriodo">
+                  <option value="24h">Últimas 24h</option>
+                  <option value="7d">Últimos 7 dias</option>
+                  <option value="30d">Últimos 30 dias</option>
+                  <option value="all">Todo período</option>
+                </select>
+                <button class="btn-export-tanque" type="button" (click)="exportarCsvMonitoramentosValidados()" [disabled]="exportandoCsv">
+                  {{ exportandoCsv ? 'Exportando...' : 'Exportar CSV' }}
+                </button>
+              </div>
+            </div>
+
+            @if (registrosMonitoramentoFiltrados.length > 0) {
+              <div class="history-reference-bar">
+                <span><strong>Esperado:</strong> Temp {{ getFaixaEsperadaTabela('temperatura') }}</span>
+                <span>pH {{ getFaixaEsperadaTabela('ph') }}</span>
+                <span>O₂ {{ getFaixaEsperadaTabela('oxigenio') }}</span>
+                <span>NH₃ {{ getFaixaEsperadaTabela('amonia') }}</span>
+                <span>NO₂ {{ getFaixaEsperadaTabela('nitritos') }}</span>
+              </div>
+              <div class="history-table-wrapper hide-scrollbar">
+                <table class="history-table">
+                  <thead>
+                    <tr>
+                      <th>Data</th>
+                      <th>Temp (°C)</th>
+                      <th>pH</th>
+                      <th>O₂ (mg/L)</th>
+                      <th>NH₃ (mg/L)</th>
+                      <th>NO₂ (mg/L)</th>
+                      <th>Alertas</th>
+                      <th>Responsável</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (registro of registrosMonitoramentoFiltrados; track registro.id) {
+                      <tr>
+                        <td>{{ registro.dataCompleta }}</td>
+                        <td>{{ registro.temperatura }}</td>
+                        <td>{{ registro.ph }}</td>
+                        <td>{{ registro.oxigenioDissolvido }}</td>
+                        <td>{{ registro.amonia }}</td>
+                        <td>{{ registro.nitritos }}</td>
+                        <td>{{ registro.alertasForaPadrao }}</td>
+                        <td>{{ registro.responsavel }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else {
+              <p class="history-empty">Nenhum registro encontrado para o período selecionado.</p>
+            }
+          </div>
+        }
+
+        @if (!carregandoDetalhes() && !carregandoMedicao && !ultimaMedicao) {
+          <div class="empty-state">
+            <p>Nenhuma medição registrada para este tanque ainda.</p>
+          </div>
+        }
+      </div>
+    }
+
+    @if (!carregandoTanques() && tanques.length === 0) {
+      <p class="empty-feedback">Nenhum tanque encontrado.</p>
+    }
+  </div>
+
+  @if (!carregandoTanques() && tanques.length > 0) {
+    <aside class="side-column">
+      <div class="side-search">
+        <input type="text" placeholder="Procurar Axolote" [(ngModel)]="termoBuscaAxolote" class="search-input-sidebar">
+        <lucide-icon [img]="SearchIcon" [size]="18" class="search-icon"></lucide-icon>
+      </div>
+
+      <div class="axolotl-list">
+        @for (axolote of axolotesFiltrados; track axolote.id) {
+          <div
+            class="axolotl-item"
+            role="button"
+            tabindex="0"
+            (click)="abrirPaginaAxolotes(axolote)"
+            (keydown.enter)="abrirPaginaAxolotes(axolote)"
+            (keydown.space)="abrirPaginaAxolotes(axolote); $event.preventDefault()"
+          >
+            <div class="avatar-wrapper">
+              <img [src]="axolote.img" alt="Axolote" class="avatar-img">
+            </div>
+            <span class="axolote-name">{{ axolote.name }}</span>
+          </div>
+        }
+
+        @if (axolotesFiltrados.length === 0) {
+          <p class="empty-msg">Nenhum axolote encontrado.</p>
+        }
+      </div>
+    </aside>
+  }
+
+</div>

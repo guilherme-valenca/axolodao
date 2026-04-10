@@ -1,0 +1,76 @@
+# .gitlab-ci.yml — Pipeline de CI da AmbyData
+#
+# O que acontece aqui:
+#   1. A cada push/merge request, o GitLab executa este arquivo automaticamente.
+#   2. Ele define dois "stages" (etapas): build → test.
+#   3. O stage "test" roda os testes E2E com Playwright.
+#   4. Se algum teste falhar, o pipeline fica vermelho e o merge é bloqueado.
+#   5. Se tudo passar, o pipeline fica verde e o merge pode prosseguir.
+#
+# Imagens usadas:
+#   - node:22-slim      → stage de build (leve)
+#   - playwright:jammy  → stage E2E (inclui Chromium, Firefox e WebKit já instalados)
+
+stages:
+  - build
+  - test
+
+# ─── Variáveis globais ────────────────────────────────────────────────────────
+
+variables:
+  # Desativa o spinner interativo do Angular CLI no CI (evita outputs sujos)
+  NG_CLI_ANALYTICS: "false"
+  # Cache de módulos Node entre pipelines do mesmo branch
+  npm_config_cache: "$CI_PROJECT_DIR/.npm"
+
+# ─── Cache compartilhado de dependências ─────────────────────────────────────
+
+.node_cache: &node_cache
+  key:
+    files:
+      - frontend/package-lock.json
+  paths:
+    - frontend/node_modules/
+    - .npm/
+  policy: pull
+
+# ─── Stage 1: Build ───────────────────────────────────────────────────────────
+
+install-deps:
+  stage: build
+  image: node:22-slim
+  cache:
+    <<: *node_cache
+    policy: pull-push  # Instala e salva o cache neste job
+  script:
+    - cd frontend
+    - npm ci --prefer-offline
+  # Mesmas regras do e2e-tests para garantir que este job exista
+  # em todos os pipelines onde e2e-tests for executado
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
+# ─── Stage 2: Testes E2E ──────────────────────────────────────────────────────
+
+e2e-tests:
+  stage: test
+  # Imagem oficial do Playwright com Chromium, Firefox e WebKit pré-instalados.
+  # Nenhum browser precisa ser baixado no CI — já está na imagem.
+  image: mcr.microsoft.com/playwright:v1.58.2-jammy
+  needs:
+    - install-deps
+  cache:
+    <<: *node_cache
+    policy: pull  # Só lê o cache (não salva)
+  script:
+    # O playwright.config.ts já gerencia o ciclo de vida do servidor Angular
+    # via webServer (command, url, timeout: 60s). Não é necessário iniciá-lo
+    # manualmente aqui — fazer isso causa conflito de porta no CI.
+    - cd frontend
+    - npm ci
+    - CI=true npx playwright test
+  # Só roda em merge requests e na branch principal
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'

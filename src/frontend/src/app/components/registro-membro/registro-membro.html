@@ -1,0 +1,84 @@
+<div class="registro-container">
+  <h2 class="registro-title">Registrar Membro ENS</h2>
+
+  <div class="registro-info-card">
+    <p>Para registrar membros, você precisa ser o owner do subdomínio ENS da sua instituição. Isso é configurado automaticamente quando o admin cria a instituição com seu endereço como gerente.</p>
+    <p>As 4 transações são feitas diretamente via MetaMask (requer ETH para gas).</p>
+  </div>
+
+  <div class="registro-card">
+    <div class="registro-card-header">
+      <h3>Novo Membro</h3>
+    </div>
+    <div class="registro-card-body">
+      <div class="registro-form">
+        <div class="form-row">
+          <div class="form-field">
+            <label>Label da Instituição</label>
+            <input type="text" [(ngModel)]="instLabel" placeholder="Ex: labtest" (input)="atualizarPreviews()" />
+          </div>
+          <div class="form-field">
+            <label>Label do Membro</label>
+            <input type="text" [(ngModel)]="userLabel" placeholder="Ex: joao, ana" (input)="atualizarPreviews()" />
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label>Carteira do Membro</label>
+          <input type="text" [(ngModel)]="userAddress" placeholder="0x..." />
+        </div>
+
+        <div class="form-field">
+          <label>Resolver ENS</label>
+          <input type="text" [(ngModel)]="resolverAddress" class="mono-input" />
+        </div>
+
+        @if (ensPreview) {
+          <div class="preview-section">
+            <div class="preview-row">
+              <span class="preview-label">Preview ENS:</span>
+              <span class="preview-value highlight">{{ ensPreview }}</span>
+            </div>
+            <div class="preview-row">
+              <span class="preview-label">parentNode:</span>
+              <span class="preview-value mono">{{ parentNodePreview }}</span>
+            </div>
+            <div class="preview-row">
+              <span class="preview-label">userNode:</span>
+              <span class="preview-value mono">{{ userNodePreview }}</span>
+            </div>
+          </div>
+        }
+
+        <button class="registro-btn" (click)="registrarMembro()" [disabled]="processando">
+          {{ processando ? 'Processando transações...' : 'Registrar Membro (4 txs)' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  @if (logs.length > 0) {
+    <div class="registro-card">
+      <div class="registro-card-header">
+        <h3>Log de Progresso</h3>
+      </div>
+      <div class="registro-card-body log-body">
+        @for (entry of logs; track $index) {
+          <div class="log-entry" [ngClass]="{
+            'log-pendente': entry.status === 'pendente',
+            'log-ok': entry.status === 'ok',
+            'log-erro': entry.status === 'erro'
+          }">
+            <span class="log-hora">{{ entry.hora }}</span>
+            <span class="log-status">
+              @if (entry.status === 'pendente') { ⏳ }
+              @if (entry.status === 'ok') { ✓ }
+              @if (entry.status === 'erro') { ✗ }
+            </span>
+            <span class="log-msg">{{ entry.mensagem }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,363 @@
+/* You can add global styles to this file, and also import other style files */
+/* src/styles.css */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+app-root {
+  display: block;
+  height: 100%;
+}
+
+.home-tanks-block {
+  display: block;
+  margin-bottom: 0.95rem;
+}
+
+.home-tanks-block .tanks-carousel {
+  display: flex;
+  gap: 0.8rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  flex: 1;
+}
+
+.home-tanks-block .axolotes-carousel {
+  overflow-x: auto !important;
+  overflow-y: hidden;
+  cursor: grab;
+  user-select: none;
+}
+
+.home-tanks-block .axolotes-carousel.dragging {
+  cursor: grabbing;
+}
+
+.home-tanks-block .tank-container {
+  flex: 0 0 calc((100% - 1.6rem) / 3);
+}
+
+.home-axolotes-block {
+  display: block;
+  margin-bottom: 0.9rem;
+}
+
+.home-axolotes-block .axolotes-grid-home {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.7rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin-bottom: 0;
+  flex: 1;
+}
+
+.home-axolotes-block .axolote-card-large {
+  flex: 0 0 clamp(210px, 22vw, 260px);
+  max-width: none;
+}
+
+@media (max-width: 1100px) {
+  .home-tanks-block .tank-container {
+    flex-basis: calc((100% - 0.8rem) / 2);
+  }
+
+  .home-axolotes-block .axolote-card-large {
+    flex-basis: min(76vw, 250px);
+  }
+}
+
+@media (max-width: 768px) {
+  .home-tanks-block .tank-container {
+    flex-basis: min(86vw, 360px);
+  }
+
+  .home-axolotes-block .axolote-card-large {
+    flex-basis: min(80vw, 240px);
+  }
+}
+
+/* ESTILOS GERAIS (Aplicados em TODAS as telas, PC, Tablet, Celular  */
+
+/* PADRONIZAÃƒâ€¡ÃƒÆ’O DE TODOS OS CABEÃƒâ€¡ALHOS DE CARDS */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center; 
+  min-height: 90px; 
+  padding: 0 0 1rem 0; 
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #EAECEE;
+  box-sizing: border-box; 
+}
+
+/* Garante que os tÃƒÂ­tulos dentro do cabeÃƒÂ§alho nÃƒÂ£o quebrem o layout */
+.card-header h2 {
+  margin: 0;
+  line-height: 1.2;
+  font-size: 1.6rem !important; /* ForÃƒÂ§a o mesmo tamanho em todas as abas */
+  font-weight: 700 !important;
+  color: #2C3E50;
+}
+
+.card-header p {
+  margin: 0.3rem 0 0 0;
+  font-size: 0.85rem !important;
+  color: #7F8C8D;
+}
+
+/* PADRONIZAÃƒâ€¡ÃƒÆ’O DA BARRA SUPERIOR DA TELA */
+.topbar {
+  background: var(--surface, #fff);
+  border-bottom: 1px solid var(--border, #e2ddd6);
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  min-height: 80px; 
+  box-sizing: border-box; 
+}
+
+
+/* RESPONSIVIDADE - TABLETS E TELAS MENORES (AtÃƒÂ© 992px) */
+@media (max-width: 992px) {
+  /* O grid de 4 colunas da ÃƒÂ¡gua passa a ter apenas 2 colunas */
+  .grid-4-cols {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* O card principal fica um pouco mais apertado para caber */
+  .main-card {
+    padding: 1.5rem;
+  }
+
+  .bottom-grid {
+    grid-template-columns: 1fr; /* Muda para 1 coluna sÃƒÂ³ */
+  }
+}
+
+/* RESPONSIVIDADE - CELULARES (AtÃƒÂ© 768px) */
+@media (max-width: 768px) {
+  
+  /* O grid que era de 2 colunas no tablet, agora vira 1 coluna sÃƒÂ³ */
+  .grid-4-cols {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Os botÃƒÂµes de abas (Tanques / Axolotes) ficam empilhados */
+  .filter-tabs {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .tab-btn {
+    width: 100%; 
+    justify-content: center; 
+  }
+
+  /* Reduz o respiro (padding) da box principal */
+  .card-body {
+    padding: 1rem !important;
+  }
+  
+  /* Reduz um pouquinho o tÃƒÂ­tulo sÃƒÂ³ no celular para nÃƒÂ£o quebrar linha feio */
+  .card-header h2 {
+    font-size: 1.3rem !important;
+  }
+
+  .bottom-grid {
+    grid-template-columns: 1fr; /* Muda para 1 coluna sÃƒÂ³ */
+  }
+}
+
+/* Notification dropdown - Tela Inicial */
+.notification-wrapper {
+  position: relative;
+}
+
+.notification-btn {
+  position: relative;
+}
+
+.notification-count {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.notification-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: -10px;
+  width: min(440px, calc(100vw - 24px));
+  max-height: 420px;
+  overflow: auto;
+  background: #ffffff;
+  border: 1px solid #e5ecef;
+  border-radius: 14px;
+  box-shadow: 0 18px 40px rgba(20, 64, 77, 0.15);
+  z-index: 30;
+}
+
+.notification-header {
+  padding: 0.78rem 0.85rem;
+  border-bottom: 1px solid #eef3f5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.notification-header h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #14404D;
+}
+
+.notification-subtitle {
+  font-size: 0.74rem;
+  color: #8a9ba3;
+}
+
+.notification-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.65rem;
+}
+
+.notification-item {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  padding: 0.62rem;
+  border-radius: 10px;
+}
+
+.notification-item-red {
+  background: #fef2f2;
+}
+
+.notification-item-yellow {
+  background: #fefce8;
+}
+
+.notification-item-green {
+  background: #f0fdf4;
+}
+
+.notification-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-top: 0.33rem;
+  flex-shrink: 0;
+}
+
+.notification-dot-red {
+  background: #ef4444;
+}
+
+.notification-dot-yellow {
+  background: #f59e0b;
+}
+
+.notification-dot-green {
+  background: #22c55e;
+}
+
+.notification-body {
+  min-width: 0;
+}
+
+.notification-title {
+  margin: 0 0 0.15rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #224d59;
+}
+
+.notification-text {
+  margin: 0;
+  font-size: 0.76rem;
+  color: #5f7480;
+  line-height: 1.35;
+}
+
+.notification-empty {
+  margin: 0;
+  padding: 0.85rem;
+  color: #8fa0a8;
+  font-size: 0.82rem;
+}
+
+/* Scroll interno dos cards de historico na Home */
+.bottom-grid .history-card {
+  overflow: hidden;
+  max-height: 520px;
+  display: flex;
+  flex-direction: column;
+}
+
+.bottom-grid .timeline-container,
+.bottom-grid .alerts-container {
+  overflow-y: auto;
+  padding-right: 0.35rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(149, 165, 166, 0.35) transparent;
+}
+
+.bottom-grid .timeline-container::-webkit-scrollbar,
+.bottom-grid .alerts-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.bottom-grid .timeline-container::-webkit-scrollbar-thumb,
+.bottom-grid .alerts-container::-webkit-scrollbar-thumb {
+  background: rgba(149, 165, 166, 0.35);
+  border-radius: 9999px;
+}
+
+.bottom-grid .timeline-container::-webkit-scrollbar-track,
+.bottom-grid .alerts-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Carrosseis horizontais sem barra visivel (mantem scroll por arraste/roda) */
+.tanks-carousel,
+.axolotes-carousel {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.tanks-carousel::-webkit-scrollbar,
+.axolotes-carousel::-webkit-scrollbar {
+  display: none;
+}

@@ -1,0 +1,356 @@
+<div class="medicoes-layout">
+  <div class="main-card" *ngIf="cargoUsuario === 'operador'">
+    <div class="page-title-section">
+      <div>
+        <h2>Registrar Medição Ambiental</h2>
+        <p>Valores em decimais. O sistema converterá automaticamente para o Smart Contract.</p>
+      </div>
+      <button class="test-btn" type="button" (click)="preencherTeste()">Preencher Teste</button>
+    </div>
+
+    <form [formGroup]="medicaoForm" class="card-body">
+      <div class="form-row">
+        <div class="input-group full-width">
+          <label for="mTankId">Tanque Selecionado</label>
+          <select id="mTankId" formControlName="mTankId" class="amby-input">
+            <option value="">{{ carregandoTanques ? 'Buscando tanques...' : '— Selecione o Tanque —' }}</option>
+            <option *ngFor="let tanque of tanquesDisponiveis" [value]="tanque.id">Tanque #{{ tanque.id }} — {{ tanque.nome }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="reference-banner" aria-label="Referência de preenchimento">
+        <div>
+          <strong>Referência de preenchimento</strong>
+          <p>As faixas esperadas ficam em blocos separados. O valor a registrar continua apenas no campo branco.</p>
+        </div>
+        <span class="reference-tag">Faixa esperada</span>
+      </div>
+
+      <div class="grid-4-cols">
+        <div class="input-group">
+          <label class="lbl-unit">Temp <span>(°C)</span></label>
+          <input type="number" step="0.1" formControlName="mTemp" placeholder="Insira o dado" class="amby-input" />
+          <div class="range-hint">
+            <span class="range-hint-label">{{ getReferenciaParametro('mTemp').label }}</span>
+            <strong>{{ getReferenciaParametro('mTemp').faixa }}</strong>
+            <small>{{ getReferenciaParametro('mTemp').resumo }}</small>
+          </div>
+        </div>
+        <div class="input-group">
+          <label class="lbl-unit">pH</label>
+          <input type="number" step="0.1" formControlName="mPh" placeholder="Insira o dado" class="amby-input" />
+          <div class="range-hint">
+            <span class="range-hint-label">{{ getReferenciaParametro('mPh').label }}</span>
+            <strong>{{ getReferenciaParametro('mPh').faixa }}</strong>
+            <small>{{ getReferenciaParametro('mPh').resumo }}</small>
+          </div>
+        </div>
+        <div class="input-group">
+          <label class="lbl-unit">O₂ Dissol. <span>(mg/L)</span></label>
+          <input type="number" step="0.1" formControlName="mO2" placeholder="Insira o dado" class="amby-input" />
+          <div class="range-hint">
+            <span class="range-hint-label">{{ getReferenciaParametro('mO2').label }}</span>
+            <strong>{{ getReferenciaParametro('mO2').faixa }}</strong>
+            <small>{{ getReferenciaParametro('mO2').resumo }}</small>
+          </div>
+        </div>
+        <div class="input-group">
+          <label class="lbl-unit">Condutiv. <span>(µS/cm)</span></label>
+          <input type="number" formControlName="mCond" placeholder="Insira o dado" class="amby-input" />
+          <div class="range-hint">
+            <span class="range-hint-label">{{ getReferenciaParametro('mCond').label }}</span>
+            <strong>{{ getReferenciaParametro('mCond').faixa }}</strong>
+            <small>{{ getReferenciaParametro('mCond').resumo }}</small>
+          </div>
+        </div>
+        <div class="input-group">
+          <label class="lbl-unit">Turbidez <span>(NTU)</span></label>
+          <input type="number" step="0.1" formControlName="mTurb" placeholder="Insira o dado" class="amby-input" />
+          <div class="range-hint">
+            <span class="range-hint-label">{{ getReferenciaParametro('mTurb').label }}</span>
+            <strong>{{ getReferenciaParametro('mTurb').faixa }}</strong>
+            <small>{{ getReferenciaParametro('mTurb').resumo }}</small>
+          </div>
+        </div>
+        <div class="input-group">
+          <label class="lbl-unit">Fosfatos <span>(mg/L)</span></label>
+          <input type="number" step="0.01" formControlName="mPhos" placeholder="Insira o dado" class="amby-input" />
+          <div class="range-hint">
+            <span class="range-hint-label">{{ getReferenciaParametro('mPhos').label }}</span>
+            <strong>{{ getReferenciaParametro('mPhos').faixa }}</strong>
+            <small>{{ getReferenciaParametro('mPhos').resumo }}</small>
+          </div>
+        </div>
+        <div class="input-group">
+          <label class="lbl-unit">NO₂ <span>(mg/L)</span></label>
+          <input type="number" step="0.01" formControlName="mNo2" placeholder="Insira o dado" class="amby-input" />
+          <div class="range-hint">
+            <span class="range-hint-label">{{ getReferenciaParametro('mNo2').label }}</span>
+            <strong>{{ getReferenciaParametro('mNo2').faixa }}</strong>
+            <small>{{ getReferenciaParametro('mNo2').resumo }}</small>
+          </div>
+        </div>
+        <div class="input-group">
+          <label class="lbl-unit">NO₃ <span>(mg/L)</span></label>
+          <input type="number" step="0.1" formControlName="mNo3" placeholder="Insira o dado" class="amby-input" />
+          <div class="range-hint">
+            <span class="range-hint-label">{{ getReferenciaParametro('mNo3').label }}</span>
+            <strong>{{ getReferenciaParametro('mNo3').faixa }}</strong>
+            <small>{{ getReferenciaParametro('mNo3').resumo }}</small>
+          </div>
+        </div>
+        <div class="input-group">
+          <label class="lbl-unit">NH₃ <span>(mg/L)</span></label>
+          <input type="number" step="0.01" formControlName="mNh3" placeholder="Insira o dado" class="amby-input" />
+          <div class="range-hint">
+            <span class="range-hint-label">{{ getReferenciaParametro('mNh3').label }}</span>
+            <strong>{{ getReferenciaParametro('mNh3').faixa }}</strong>
+            <small>{{ getReferenciaParametro('mNh3').resumo }}</small>
+          </div>
+        </div>
+        <div class="input-group">
+          <label class="lbl-unit">Dureza GH <span>(dGH)</span></label>
+          <input type="number" step="0.1" formControlName="mGh" placeholder="Insira o dado" class="amby-input" />
+          <div class="range-hint">
+            <span class="range-hint-label">{{ getReferenciaParametro('mGh').label }}</span>
+            <strong>{{ getReferenciaParametro('mGh').faixa }}</strong>
+            <small>{{ getReferenciaParametro('mGh').resumo }}</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button type="button" class="submit-btn" [disabled]="enviandoTx || medicaoForm.invalid" (click)="registrarMedicao()">
+          {{ enviandoTx ? 'Processando...' : 'Registrar Medição da Água' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div class="main-card" *ngIf="cargoUsuario !== 'nenhum' && !medicaoParaAvaliar">
+    <div class="page-title-section">
+      <div>
+        <h2>Consulta de Medições</h2>
+        <p>Filtre por tanque para visualizar medições registradas.</p>
+      </div>
+    </div>
+
+    <div class="search-section">
+      <div class="search-row">
+        <div class="search-group">
+          <label>Buscar por ID</label>
+          <div class="search-inline">
+            <input type="number" [(ngModel)]="buscaId" placeholder="Ex: 1" class="search-input" min="1" />
+            <button class="btn-search" (click)="buscarMedicaoPorId()" [disabled]="carregandoBusca">
+              {{ carregandoBusca ? 'Buscando...' : 'Buscar' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Filtro por Tanque -->
+        <div class="search-group">
+          <label>Filtrar por Tanque</label>
+          <div class="search-inline">
+            <select [(ngModel)]="filtroTanqueId" class="filter-select">
+              <option value="">— Todos —</option>
+              <option *ngFor="let tanque of tanquesDisponiveis" [value]="tanque.id">
+                Tanque #{{ tanque.id }} — {{ tanque.nome }}
+              </option>
+            </select>
+            <button class="btn-search" (click)="filtrarPorTanque()" [disabled]="carregandoFiltro">
+              {{ carregandoFiltro ? 'Filtrando...' : 'Filtrar' }}
+            </button>
+            <button class="btn-export-inline" (click)="exportarCsvFiltradoPorTanque()" [disabled]="carregandoFiltro || exportandoCsv">
+              {{ exportandoCsv ? 'Exportando...' : 'Exportar CSV' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="measurement-detail-card" *ngIf="medicaoDetalhe">
+        <div class="detail-header">
+          <h3>Medição #{{ medicaoDetalhe.id }} — {{ medicaoDetalhe.nomeTanque }}</h3>
+          <span class="status-badge" [ngClass]="medicaoDetalhe.status.classe">{{ medicaoDetalhe.status.texto }}</span>
+        </div>
+
+        <div class="detail-grid">
+          <div class="detail-field"><span class="detail-label">Temp (°C)</span><span class="detail-value">{{ medicaoDetalhe.temperatura }}</span></div>
+          <div class="detail-field"><span class="detail-label">pH</span><span class="detail-value">{{ medicaoDetalhe.ph }}</span></div>
+          <div class="detail-field"><span class="detail-label">O₂ (mg/L)</span><span class="detail-value">{{ medicaoDetalhe.o2 }}</span></div>
+          <div class="detail-field"><span class="detail-label">Condutiv. (µS/cm)</span><span class="detail-value">{{ medicaoDetalhe.condutividade }}</span></div>
+          <div class="detail-field"><span class="detail-label">Turbidez (NTU)</span><span class="detail-value">{{ medicaoDetalhe.turbidez }}</span></div>
+          <div class="detail-field"><span class="detail-label">Fosfatos (mg/L)</span><span class="detail-value">{{ medicaoDetalhe.fosfatos }}</span></div>
+          <div class="detail-field"><span class="detail-label">NO₂ (mg/L)</span><span class="detail-value">{{ medicaoDetalhe.no2 }}</span></div>
+          <div class="detail-field"><span class="detail-label">NO₃ (mg/L)</span><span class="detail-value">{{ medicaoDetalhe.no3 }}</span></div>
+          <div class="detail-field"><span class="detail-label">NH₃ (mg/L)</span><span class="detail-value">{{ medicaoDetalhe.amonia }}</span></div>
+          <div class="detail-field"><span class="detail-label">Dureza (dGH)</span><span class="detail-value">{{ medicaoDetalhe.dureza }}</span></div>
+        </div>
+
+        <div class="detail-meta">
+          <span><strong>Data:</strong> {{ medicaoDetalhe.dataHora }}</span>
+          <span *ngIf="medicaoDetalhe.validator && medicaoDetalhe.validator !== '0x0000000000000000000000000000000000000000'">
+            <strong>Validador:</strong> {{ encurtarEndereco(medicaoDetalhe.validator) }}
+          </span>
+          <span *ngIf="medicaoDetalhe.contestReason">
+            <strong>Motivo:</strong> {{ medicaoDetalhe.contestReason }}
+          </span>
+          <a *ngIf="isAttestationValid(medicaoDetalhe.attestationUID)"
+             [href]="'https://sepolia.easscan.org/attestation/view/' + medicaoDetalhe.attestationUID"
+             target="_blank" class="eas-link">
+            Ver Atestação EAS
+          </a>
+        </div>
+      </div>
+
+      <div class="tank-status-card" *ngIf="tankStatus">
+        <h4>Status do Tanque</h4>
+        <div class="tank-status-grid">
+          <div class="status-item">
+            <span class="status-label">Última Pendente</span>
+            <span class="status-value">{{ tankStatus.lastPendingId > 0 ? '#' + tankStatus.lastPendingId : '—' }}</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Última Validada</span>
+            <span class="status-value">{{ tankStatus.lastValidatedId > 0 ? '#' + tankStatus.lastValidatedId : '—' }}</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Total de Medições</span>
+            <span class="status-value">{{ tankStatus.totalMeasurements }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="measurement-table-wrapper" *ngIf="medicoesFiltradas.length > 0">
+        <h4>Medições do Tanque ({{ medicoesFiltradas.length }})</h4>
+        <div class="table-scroll">
+          <table class="measurement-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Tanque</th>
+                <th>Temp</th>
+                <th>pH</th>
+                <th>O₂</th>
+                <th>NH₃</th>
+                <th>Status</th>
+                <th>Data</th>
+                <th>EAS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let med of medicoesFiltradas">
+                <td>#{{ med.id }}</td>
+                <td>{{ med.nomeTanque }}</td>
+                <td>{{ med.temperatura }}°C</td>
+                <td>{{ med.ph }}</td>
+                <td>{{ med.o2 }}</td>
+                <td>{{ med.amonia }}</td>
+                <td><span class="status-badge" [ngClass]="med.status.classe">{{ med.status.texto }}</span></td>
+                <td>{{ med.dataHora }}</td>
+                <td>
+                  <a *ngIf="isAttestationValid(med.attestationUID)"
+                     [href]="'https://sepolia.easscan.org/attestation/view/' + med.attestationUID"
+                     target="_blank" class="eas-link">EAS</a>
+                  <span *ngIf="!isAttestationValid(med.attestationUID)">—</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="empty-state" *ngIf="filtroTanqueId && !carregandoFiltro && medicoesFiltradas.length === 0">
+        <p>Nenhuma medição encontrada para este tanque.</p>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="cargoUsuario === 'auditor'">
+    <div class="auditoria-layout" *ngIf="medicaoParaAvaliar">
+      <button class="btn-voltar" (click)="voltarParaPendentes()">← Voltar para pendentes</button>
+
+      <div class="auditoria-grid">
+        <div class="panel-white">
+          <img src="/assets/axolotes-loginPage.png" alt="Foto do Tanque" class="tank-photo">
+          <p class="tank-id-tag">ID da Medição: #{{ medicaoParaAvaliar.id }}</p>
+          <h2 class="tank-title">{{ medicaoParaAvaliar.nomeTanque }}</h2>
+          <p class="tank-subtitle">Medição de Água</p>
+          <p class="tank-date"><strong>Data do registro:</strong> {{ medicaoParaAvaliar.dataHora || medicaoParaAvaliar.dataFormatada }}</p>
+        </div>
+
+        <div class="panel-white">
+          <div class="tag-registro">Registro em Avaliação</div>
+
+          <div class="form-review-grid">
+            <div class="review-field">
+              <label>Temperatura (°C)</label>
+              <input type="text" [value]="medicaoParaAvaliar.temperatura" disabled class="disabled-input">
+              <span class="review-expected">Esperado: {{ getReferenciaParametro('mTemp').faixa }}</span>
+            </div>
+            <div class="review-field">
+              <label>pH</label>
+              <input type="text" [value]="medicaoParaAvaliar.ph" disabled class="disabled-input">
+              <span class="review-expected">Esperado: {{ getReferenciaParametro('mPh').faixa }}</span>
+            </div>
+            <div class="review-field">
+              <label>O₂ Dissolvido (mg/L)</label>
+              <input type="text" [value]="medicaoParaAvaliar.oxigenioDissolvido || medicaoParaAvaliar.o2" disabled class="disabled-input">
+              <span class="review-expected">Esperado: {{ getReferenciaParametro('mO2').faixa }}</span>
+            </div>
+            <div class="review-field">
+              <label>Condutividade (µS/cm)</label>
+              <input type="text" [value]="medicaoParaAvaliar.condutividade" disabled class="disabled-input">
+              <span class="review-expected">Esperado: {{ getReferenciaParametro('mCond').faixa }}</span>
+            </div>
+            <div class="review-field">
+              <label>Turbidez (NTU)</label>
+              <input type="text" [value]="medicaoParaAvaliar.turbidez" disabled class="disabled-input">
+              <span class="review-expected">Esperado: {{ getReferenciaParametro('mTurb').faixa }}</span>
+            </div>
+            <div class="review-field">
+              <label>Fosfatos (mg/L)</label>
+              <input type="text" [value]="medicaoParaAvaliar.fosfatos" disabled class="disabled-input">
+              <span class="review-expected">Esperado: {{ getReferenciaParametro('mPhos').faixa }}</span>
+            </div>
+            <div class="review-field">
+              <label>NO₂ (mg/L)</label>
+              <input type="text" [value]="medicaoParaAvaliar.no2" disabled class="disabled-input">
+              <span class="review-expected">Esperado: {{ getReferenciaParametro('mNo2').faixa }}</span>
+            </div>
+            <div class="review-field">
+              <label>NO₃ (mg/L)</label>
+              <input type="text" [value]="medicaoParaAvaliar.no3" disabled class="disabled-input">
+              <span class="review-expected">Esperado: {{ getReferenciaParametro('mNo3').faixa }}</span>
+            </div>
+            <div class="review-field">
+              <label>Amônia (mg/L)</label>
+              <input type="text" [value]="medicaoParaAvaliar.amonia" disabled class="disabled-input">
+              <span class="review-expected">Esperado: {{ getReferenciaParametro('mNh3').faixa }}</span>
+            </div>
+            <div class="review-field">
+              <label>Dureza (dGH)</label>
+              <input type="text" [value]="medicaoParaAvaliar.dureza" disabled class="disabled-input">
+              <span class="review-expected">Esperado: {{ getReferenciaParametro('mGh').faixa }}</span>
+            </div>
+          </div>
+
+          <div class="action-buttons-row">
+            <button class="btn-aceitar" (click)="aceitarMedicao()" [disabled]="enviandoTx">
+              {{ enviandoTx ? 'Processando...' : 'Aceitar' }}
+            </button>
+            <button class="btn-recusar" (click)="recusarMedicao()" [disabled]="enviandoTx">
+              {{ enviandoTx ? 'Processando...' : 'Recusar' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="empty-state-restrito" *ngIf="!medicaoParaAvaliar">
+      <h3 class="empty-state-title">Área de Auditoria</h3>
+      <p class="empty-state-text">Para avaliar uma medição, volte para a aba <strong>Home</strong> e selecione um registro pendente.</p>
+    </div>
+  </div>
+</div>
+

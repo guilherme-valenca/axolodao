@@ -1,0 +1,103 @@
+<div class="diag-container">
+  <h2 class="diag-title">Diagnóstico do Sistema</h2>
+
+  @if (carregando) {
+    <div class="diag-loading">Carregando dados do contrato...</div>
+  } @else {
+    <!-- Constantes do AxoloAccess -->
+    <div class="diag-card">
+      <div class="diag-card-header">
+        <h3>Constantes do AxoloAccess</h3>
+      </div>
+      <div class="diag-card-body">
+        <div class="diag-row">
+          <span class="diag-label">AXOLODAO_NODE</span>
+          <span class="diag-value mono">{{ axolodaoNode }}</span>
+          @if (nodeConfere) {
+            <span class="diag-check ok">OK</span>
+          } @else {
+            <span class="diag-check bad">Divergente</span>
+          }
+        </div>
+        <div class="diag-row">
+          <span class="diag-label">ENS_REGISTRY</span>
+          <span class="diag-value mono">{{ ensRegistry }}</span>
+          @if (ensConfere) {
+            <span class="diag-check ok">OK</span>
+          } @else {
+            <span class="diag-check bad">Divergente</span>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Contratos Deployados -->
+    <div class="diag-card">
+      <div class="diag-card-header">
+        <h3>Contratos Deployados</h3>
+      </div>
+      <div class="diag-card-body">
+        @for (c of contratos; track c.nome) {
+          <div class="diag-row">
+            <span class="diag-label">{{ c.nome }}</span>
+            <a [href]="etherscanUrl(c.endereco)" target="_blank" rel="noopener" class="diag-link mono">{{ c.endereco }}</a>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- EAS Schemas -->
+    <div class="diag-card">
+      <div class="diag-card-header">
+        <h3>EAS Schemas</h3>
+      </div>
+      <div class="diag-card-body">
+        <div class="diag-row">
+          <span class="diag-label">EAS Contract</span>
+          <a [href]="etherscanUrl(easAddress)" target="_blank" rel="noopener" class="diag-link mono">{{ easAddress }}</a>
+        </div>
+        @for (schema of easSchemas; track schema.nome) {
+          <div class="diag-row">
+            <span class="diag-label">{{ schema.nome }}</span>
+            <a [href]="easscanUrl(schema.uid)" target="_blank" rel="noopener" class="diag-link mono diag-uid">{{ schema.uid }}</a>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Status do Relayer -->
+    <div class="diag-card">
+      <div class="diag-card-header">
+        <h3>Status do Relayer</h3>
+      </div>
+      <div class="diag-card-body">
+        <div class="diag-row">
+          <span class="diag-label">Status</span>
+          @if (relayerStatus.online) {
+            <span class="diag-check ok">Online</span>
+          } @else {
+            <span class="diag-check bad">Offline</span>
+          }
+        </div>
+        @if (relayerStatus.wallet) {
+          <div class="diag-row">
+            <span class="diag-label">Wallet</span>
+            <a [href]="etherscanUrl(relayerStatus.wallet)" target="_blank" rel="noopener" class="diag-link mono">{{ relayerStatus.wallet }}</a>
+          </div>
+        }
+        @if (relayerStatus.saldo) {
+          <div class="diag-row">
+            <span class="diag-label">Saldo</span>
+            <span class="diag-value">{{ relayerStatus.saldo }}</span>
+          </div>
+        }
+        @if (relayerStatus.rede) {
+          <div class="diag-row">
+            <span class="diag-label">Rede</span>
+            <span class="diag-value">{{ relayerStatus.rede }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

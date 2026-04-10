@@ -1,0 +1,113 @@
+.cadastro-container {
+  background-color: #ffffff;
+  border-radius: 20px;
+  padding: 20px 24px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+  margin: 14px auto;
+  max-width: 600px;
+  width: min(600px, 100%);
+}
+
+.header-tag {
+  margin-bottom: 18px;
+}
+
+.btn-novo {
+  background-color: #329F9A;
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.form-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.input-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #14404D;
+}
+
+.input-field {
+  background-color: #F8F9FA;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  color: #2C3E50;
+  outline: none;
+  transition: box-shadow 0.2s;
+}
+
+.input-field:focus {
+  box-shadow: 0 0 0 2px #329F9A20;
+}
+
+.disabled-input {
+  color: #95A5A6;
+  cursor: not-allowed;
+}
+
+.action-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.btn-adicionar {
+  background-color: #329F9A;
+  color: white;
+  border: none;
+  border-radius: 30px;
+  padding: 10px 28px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.btn-adicionar:hover {
+  background-color: #28807C;
+}
+
+.btn-adicionar:disabled {
+  background-color: #A0D1CF;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .cadastro-container {
+    width: calc(100% - 12px);
+    margin: 10px auto;
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .btn-adicionar {
+    width: 100%;
+    padding: 11px 16px;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

@@ -1,0 +1,64 @@
+<div class="cadastro-container">
+  <div class="header-tag">
+    <span class="btn-novo">+ Novo Axolote</span>
+  </div>
+
+  <div class="form-body">
+    <div class="input-group">
+      <label>Nome</label>
+      <input type="text" placeholder="Ex: Totli" [(ngModel)]="nome" class="input-field">
+    </div>
+
+    <div class="input-group">
+      <label>Espécie</label>
+      <select [(ngModel)]="especie" class="input-field input-select">
+        <option value="" disabled>Selecione a espécie</option>
+        @for (opcao of especiesDisponiveis; track opcao.valor) {
+          <option [value]="opcao.valor">{{ opcao.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="input-group">
+      <label>Data de nascimento</label>
+      <input type="date" [(ngModel)]="dataNascimento" class="input-field">
+    </div>
+
+    <div class="input-group">
+      <label>Tanque</label>
+      <select [(ngModel)]="tanqueId" class="input-field input-select">
+        <option [ngValue]="null" disabled>Selecione o tanque</option>
+        @for (tanque of tanquesAtivos; track tanque.id) {
+          <option [ngValue]="tanque.id">#{{ tanque.id }} — {{ tanque.name }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="input-group">
+      <label>Morfologia</label>
+      <select [(ngModel)]="morfologia" class="input-field input-select">
+        <option value="" disabled>Selecione a morfologia</option>
+        @for (opcao of morfologiasDisponiveis; track opcao.valor) {
+          <option [value]="opcao.valor">{{ opcao.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="input-group">
+      <label>Hash da Foto (IPFS)</label>
+      <input type="text" placeholder="0x... (deixe vazio se não houver foto)" [(ngModel)]="photoHashInput" class="input-field input-mono">
+      <span class="input-hint">Cole aqui o hash IPFS da foto do axolote (bytes32)</span>
+    </div>
+
+    <div class="input-group">
+      <label>Responsável</label>
+      <input type="text" [value]="enderecoResponsavel" disabled class="input-field disabled-input">
+    </div>
+
+    <div class="action-row">
+      <button class="btn-adicionar" (click)="cadastrarAxolote()" [disabled]="enviandoTx">
+        {{ enviandoTx ? 'Processando...' : 'Adicionar Axolote' }}
+      </button>
+    </div>
+  </div>
+</div>

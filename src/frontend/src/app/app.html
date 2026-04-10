@@ -1,0 +1,95 @@
+﻿<div class="app-shell">
+  @if (!shouldHideSidebar()) {
+    <app-sidebar
+      [menuAtivo]="menuAtivo"
+      [cargoUsuario]="cargoUsuario"
+      (menuSelecionado)="onMenuSelecionado($event)"
+    ></app-sidebar>
+  }
+
+  <main class="app-content" [class.with-sidebar]="!shouldHideSidebar()">
+    @if (!shouldHideSidebar()) {
+      <header class="global-top-header">
+        <div class="global-search-wrapper">
+          <button type="button" class="global-search-button" (click)="pesquisarGlobal()" aria-label="Pesquisar">
+            <lucide-icon [img]="SearchIcon" class="global-search-icon" size="20"></lucide-icon>
+          </button>
+          <input
+            type="text"
+            placeholder="Pesquisar tanque ou axolote..."
+            class="global-search-input"
+            [(ngModel)]="termoPesquisaGlobal"
+            (keydown.enter)="pesquisarGlobal()"
+          >
+        </div>
+        <div class="global-header-actions">
+          <div class="notification-wrapper">
+            <button class="global-action-btn notification-btn" (click)="toggleNotificacoes($event)" aria-label="Notificações">
+              <lucide-icon [img]="BellIcon" size="24"></lucide-icon>
+              @if (notificacoesNaoLidas > 0) {
+                <span class="notification-count">{{ notificacoesNaoLidas > 9 ? '9+' : notificacoesNaoLidas }}</span>
+              }
+            </button>
+
+            @if (notificacoesAbertas) {
+              <div class="notification-panel" (click)="onClickPainelNotificacoes($event)">
+                <div class="notification-header">
+                  <h4>Notificações</h4>
+                  <span class="notification-subtitle">{{ historicoNotificacoes.length }} no histórico</span>
+                </div>
+
+                @if (historicoNotificacoes.length > 0) {
+                  <div class="notification-list">
+                    @for (alerta of historicoNotificacoes; track $index) {
+                      <div class="notification-item" [ngClass]="{
+                        'notification-item-red': alerta.nivel === 'red',
+                        'notification-item-yellow': alerta.nivel === 'yellow',
+                        'notification-item-green': alerta.nivel === 'green'
+                      }">
+                        <span class="notification-dot" [ngClass]="{
+                          'notification-dot-red': alerta.nivel === 'red',
+                          'notification-dot-yellow': alerta.nivel === 'yellow',
+                          'notification-dot-green': alerta.nivel === 'green'
+                        }"></span>
+                        <div class="notification-body">
+                          <p class="notification-title">{{ alerta.titulo }}</p>
+                          <p class="notification-text"><strong>{{ alerta.tanque }}:</strong> {{ alerta.texto }}</p>
+                          <p class="notification-time">Recebida em {{ alerta.recebidoEm }}</p>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <p class="notification-empty">Sem notificações no momento.</p>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </header>
+    }
+
+    <div class="app-route-content" [class.no-shell]="shouldHideSidebar()">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+
+  @if (notificacoesToast.length > 0) {
+    <div class="toast-stack">
+      @for (toast of notificacoesToast; track toast.uiId) {
+        <div class="toast-item" [ngClass]="{
+          'toast-item-red': toast.nivel === 'red',
+          'toast-item-yellow': toast.nivel === 'yellow',
+          'toast-item-green': toast.nivel === 'green'
+        }">
+          <div class="toast-content">
+            <p class="toast-title">{{ toast.titulo }}</p>
+            <p class="toast-text"><strong>{{ toast.tanque }}:</strong> {{ toast.texto }}</p>
+            <p class="toast-time">Recebida em {{ toast.recebidoEm }}</p>
+          </div>
+          <button class="toast-close" (click)="removerToast(toast.uiId)" aria-label="Fechar notificação">×</button>
+        </div>
+      }
+    </div>
+  }
+</div>

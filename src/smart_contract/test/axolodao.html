@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AxoloDAO — Painel de Gestão</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+<style>
+:root {
+  --bg:#f7f5f0; --surface:#fff; --surface2:#f0ede6; --border:#e2ddd6;
+  --ink:#1a1714; --ink2:#6b6460; --ink3:#a09890;
+  --teal:#00756a; --teal-l:#e0f2f0; --teal-m:#b2e0db;
+  --amber:#c97b00; --amber-l:#fff3dc;
+  --red:#c0392b; --red-l:#fdecea;
+  --blue:#1a5fa8; --blue-l:#e8f0fc;
+  --sans:'Outfit',sans-serif; --mono:'JetBrains Mono',monospace;
+  --radius:10px; --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);min-height:100vh;font-size:15px;line-height:1.5}
+.app{display:flex;min-height:100vh}
+
+/* ── Sidebar ── */
+.sidebar{width:224px;flex-shrink:0;background:var(--ink);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sb-logo{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,.08)}
+.logo-mark{font-family:var(--mono);font-size:18px;font-weight:700;color:#fff;letter-spacing:-.02em}
+.logo-mark span{color:#4dd9cc}
+.logo-sub{font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.08em;text-transform:uppercase;margin-top:3px}
+.sb-wallet{padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.08)}
+.wd-row{display:flex;align-items:center;gap:7px;margin-bottom:3px}
+.wdot{width:7px;height:7px;border-radius:50%;background:#444;flex-shrink:0;transition:background .3s}
+.wdot.ok{background:#4dd9cc;box-shadow:0 0 6px #4dd9cc66}
+.wdot.warn{background:var(--amber);animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.w-addr{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.55)}
+.w-net{font-size:10px;color:rgba(255,255,255,.3);margin-top:1px}
+.w-net.ok{color:#4dd9cc}.w-net.bad{color:var(--amber)}
+.btn-conn{margin-top:10px;width:100%;background:rgba(77,217,204,.1);border:1px solid rgba(77,217,204,.28);color:#4dd9cc;font-family:var(--mono);font-size:11px;font-weight:700;padding:7px 12px;border-radius:6px;cursor:pointer;letter-spacing:.04em;transition:all .15s}
+.btn-conn:hover{background:rgba(77,217,204,.2)}
+.btn-conn:disabled{opacity:.4;cursor:default}
+
+/* ── Relayer status ── */
+.sb-relayer{padding:10px 20px;border-bottom:1px solid rgba(255,255,255,.08)}
+.relay-status{display:flex;align-items:center;gap:7px}
+.rdot{width:6px;height:6px;border-radius:50%;background:#555;flex-shrink:0}
+.rdot.ok{background:#4dd9cc;box-shadow:0 0 5px #4dd9cc55}
+.rdot.bad{background:var(--red)}
+.relay-label{font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.06em;text-transform:uppercase}
+.relay-info{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.4);margin-top:2px}
+
+.nav{padding:12px 10px;flex:1}
+.nav-sec{margin-bottom:18px}
+.nav-lbl{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.22);padding:0 10px;margin-bottom:4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;cursor:pointer;color:rgba(255,255,255,.45);font-size:13px;font-weight:500;transition:all .15s;border:none;background:none;width:100%;text-align:left}
+.nav-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.75)}
+.nav-item.active{background:rgba(77,217,204,.12);color:#4dd9cc}
+.nav-icon{font-size:15px;flex-shrink:0}
+
+/* ── Main ── */
+.main{flex:1;overflow-y:auto}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.pg-title{font-size:17px;font-weight:600}
+.pg-sub{font-size:12px;color:var(--ink3);margin-top:1px}
+.role-pills{display:flex;gap:5px;flex-wrap:wrap}
+.pill{font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.03em}
+.pill.caretaker{background:var(--teal-l);color:var(--teal)}
+.pill.auditor{background:var(--amber-l);color:var(--amber)}
+.pill.admin{background:var(--blue-l);color:var(--blue)}
+.pill.none{background:var(--surface2);color:var(--ink3)}
+.content{padding:24px 28px;display:none}
+.content.active{display:block}
+
+/* ── Cards ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:20px}
+.card-head{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface2);gap:12px}
+.card-title{font-size:13px;font-weight:600}
+.card-sub{font-size:11px;color:var(--ink3);margin-top:1px}
+.card-body{padding:20px}
+
+/* ── Forms ── */
+.fg{display:grid;gap:12px}
+.fg2{grid-template-columns:1fr 1fr}
+.fg3{grid-template-columns:1fr 1fr 1fr}
+.fg4{grid-template-columns:1fr 1fr 1fr 1fr}
+.fc{grid-column:1/-1}
+.field{display:flex;flex-direction:column;gap:5px}
+label{font-size:11px;font-weight:600;color:var(--ink2);letter-spacing:.04em;text-transform:uppercase}
+.lbl-unit{display:flex;justify-content:space-between;align-items:baseline}
+.unit{font-size:10px;color:var(--ink3);font-weight:400;text-transform:none;letter-spacing:0}
+input,select,textarea{background:var(--bg);border:1.5px solid var(--border);border-radius:7px;color:var(--ink);font-family:var(--sans);font-size:14px;padding:9px 12px;outline:none;transition:border-color .2s;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--teal)}
+input::placeholder,textarea::placeholder{color:var(--ink3)}
+input[readonly]{background:var(--surface2);cursor:default}
+select option{background:#fff}
+textarea{resize:vertical;min-height:68px}
+.hint{font-size:11px;color:var(--ink3)}
+.btn-row{display:flex;gap:10px;align-items:center;margin-top:16px;flex-wrap:wrap}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 18px;border-radius:8px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;white-space:nowrap}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-p{background:var(--teal);color:#fff}
+.btn-p:hover:not(:disabled){background:#00655c;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,117,106,.25)}
+.btn-s{background:var(--surface2);color:var(--ink2);border:1.5px solid var(--border)}
+.btn-s:hover:not(:disabled){background:var(--border);color:var(--ink)}
+.btn-d{background:var(--red-l);color:var(--red);border:1.5px solid #f5c6c2}
+.btn-d:hover:not(:disabled){background:#f5c6c2}
+.btn-sm{padding:6px 12px;font-size:12px}
+
+/* ── Tables ── */
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 14px;font-size:11px;font-weight:600;color:var(--ink3);letter-spacing:.04em;text-transform:uppercase;border-bottom:1.5px solid var(--border);background:var(--surface2)}
+td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+.td-id{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--teal)}
+.td-mono{font-family:var(--mono);font-size:11px;color:var(--ink2)}
+
+/* ── Badges ── */
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.badge::before{content:"\25CF";font-size:7px}
+.b-active{background:var(--teal-l);color:var(--teal)}
+.b-inactive{background:var(--surface2);color:var(--ink3)}
+.b-pending{background:var(--amber-l);color:var(--amber)}
+.b-validated{background:var(--teal-l);color:var(--teal)}
+.b-contested{background:var(--red-l);color:var(--red)}
+
+/* ── Detail grid ── */
+.dg{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.di{display:flex;flex-direction:column;gap:3px}
+.dl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3)}
+.dv{font-size:14px;color:var(--ink)}
+.dv.mono{font-family:var(--mono);font-size:12px}
+.dv.accent{color:var(--teal);font-weight:600}
+
+/* ── Log panel ── */
+.log{background:#050a07;border:1px solid #1e2e22;border-radius:8px;padding:12px 14px;font-family:var(--mono);font-size:11px;line-height:1.8;min-height:72px;max-height:200px;overflow-y:auto}
+.ll{display:flex;gap:10px}
+.lt{color:#3a5a40;flex-shrink:0}
+.lm{color:#c8ddc8;word-break:break-all}
+.lm.ok{color:#4dd9cc}.lm.er{color:#ff6b6b}.lm.wn{color:#ffb84d}.lm.if{color:#7eb8ff}
+
+/* ── Const check ── */
+.const-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);gap:12px}
+.const-row:last-child{border:none}
+.ck{font-family:var(--mono);font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;flex-shrink:0;width:160px}
+.cv{font-family:var(--mono);font-size:11px;color:var(--ink);text-align:right;word-break:break-all}
+.cv.ok{color:var(--teal)}.cv.er{color:var(--red)}
+
+/* ── Spinner ── */
+.sp{width:14px;height:14px;border:2px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+.sp.dark{border-color:rgba(0,0,0,.1);border-top-color:var(--teal)}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:24px;right:24px;max-width:380px;background:var(--ink);color:#fff;padding:13px 16px;border-radius:var(--radius);font-size:13px;line-height:1.5;box-shadow:0 8px 30px rgba(0,0,0,.2);z-index:9999;display:none;animation:si .2s ease}
+#toast.ok{border-left:3px solid #4dd9cc}
+#toast.er{border-left:3px solid var(--red)}
+#toast.wn{border-left:3px solid var(--amber)}
+@keyframes si{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* ── Empty ── */
+.empty{text-align:center;padding:40px 20px;color:var(--ink3)}
+.empty-i{font-size:32px;margin-bottom:10px;opacity:.35}
+
+/* ── Divider ── */
+.divider{display:flex;align-items:center;gap:10px;color:var(--ink3);font-size:10px;letter-spacing:.1em;text-transform:uppercase;margin:18px 0}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--border)}
+
+/* ── Responsive ── */
+@media(max-width:680px){
+  .sidebar{display:none}.content{padding:14px}
+  .fg2,.fg3,.fg4,.dg{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="logo-mark">Axolo<span>DAO</span></div>
+    <div class="logo-sub">BioMuseo Xolotcalli &middot; Sepolia</div>
+  </div>
+  <div class="sb-wallet">
+    <div class="wd-row"><div class="wdot" id="wdot"></div><span class="w-addr" id="waddr">Desconectado</span></div>
+    <div class="w-net" id="wnet">&mdash;</div>
+    <button class="btn-conn" id="btnConnect">Conectar MetaMask</button>
+  </div>
+  <div class="sb-relayer">
+    <div class="relay-status"><div class="rdot" id="rdot"></div><span class="relay-label">Backend Relayer</span></div>
+    <div class="relay-info" id="relayInfo">Verificando...</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-sec">
+      <div class="nav-lbl">Acesso</div>
+      <button class="nav-item active" data-page="acesso"><span class="nav-icon">&#x1F511;</span>Acesso ENS</button>
+      <button class="nav-item" data-page="instituicoes"><span class="nav-icon">&#x1F3DB;</span>Institui&#xE7;&#xF5;es</button>
+      <button class="nav-item" data-page="usuarios"><span class="nav-icon">&#x1F464;</span>Registrar Membros</button>
+      <button class="nav-item" data-page="constantes"><span class="nav-icon">&#x1F50D;</span>Verificar Contrato</button>
+    </div>
+    <div class="nav-sec">
+      <div class="nav-lbl">Registro</div>
+      <button class="nav-item" data-page="tanques"><span class="nav-icon">&#x1FAA3;</span>Tanques</button>
+      <button class="nav-item" data-page="axolotes"><span class="nav-icon">&#x1F98E;</span>Axolotes</button>
+    </div>
+    <div class="nav-sec">
+      <div class="nav-lbl">Monitoramento</div>
+      <button class="nav-item" data-page="medicoes"><span class="nav-icon">&#x1F4CA;</span>Medições</button>
+    </div>
+  </nav>
+</aside>
+
+<!-- ── Main ── -->
+<div class="main">
+  <div class="topbar">
+    <div><div class="pg-title" id="pgTitle">Acesso ENS</div><div class="pg-sub" id="pgSub">Registro e verificação de roles via ENS</div></div>
+    <div class="role-pills" id="rolePills"><span class="pill none">Sem roles</span></div>
+  </div>
+
+  <!-- ══ PAGE: Acesso ENS ══ -->
+  <div class="content active" id="page-acesso">
+
+    <!-- Registrar -->
+    <div class="card">
+      <div class="card-head">
+        <div><div class="card-title">Registrar Acesso via ENS</div><div class="card-sub">Auto-registro — o contrato consulta o ENS onchain e concede o role automaticamente</div></div>
+      </div>
+      <div class="card-body">
+        <div class="fg fg2">
+          <div class="field">
+            <label>Label ENS</label>
+            <input type="text" id="ensLabel" placeholder="Ex: ana"/>
+            <span class="hint">Apenas o primeiro nível — sem domínio</span>
+          </div>
+          <div class="field">
+            <label>Instituição (label do subdomínio)</label>
+            <input type="text" id="ensInst" placeholder="Ex: biomuseu, unam, usp"/>
+            <span class="hint">O subdomínio da instituição registrada no contrato</span>
+          </div>
+          <div class="field">
+            <label>Nome ENS completo (preview)</label>
+            <input type="text" id="ensPreview" readonly style="background:var(--teal-l);color:var(--teal);font-family:var(--mono);font-size:13px"/>
+          </div>
+          <div class="field">
+            <label>parentNode calculado (bytes32)</label>
+            <input type="text" id="ensParent" readonly style="font-family:var(--mono);font-size:11px;color:var(--ink3)"/>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-p" id="btnRegAccess" disabled>Registrar Acesso</button>
+        </div>
+        <div style="margin-top:16px">
+          <div class="log" id="logAccess">
+            <div class="ll"><span class="lt">--:--:--</span><span class="lm if">Aguardando carteira conectada...</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Verificar -->
+    <div class="card">
+      <div class="card-head"><div class="card-title">Verificar Roles de um Endereço</div></div>
+      <div class="card-body">
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+          <div class="field" style="flex:1;min-width:260px">
+            <label>Endereço a verificar</label>
+            <input type="text" id="verifyAddr" placeholder="0x..."/>
+          </div>
+          <button class="btn btn-s btn-sm" id="btnUseMine">Usar minha wallet</button>
+          <button class="btn btn-p" id="btnVerify" disabled>Verificar</button>
+        </div>
+        <div id="verifyResult" style="display:none;margin-top:20px">
+          <div class="divider">Resultado</div>
+          <div class="dg" id="verifyGrid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE: Instituições (admin-only) ══ -->
+  <div class="content" id="page-instituicoes">
+
+    <!-- Adicionar Instituição -->
+    <div class="card">
+      <div class="card-head">
+        <div><div class="card-title">Adicionar Instituição</div><div class="card-sub">Registra um novo subdomínio no ENS e associa um role (requer DEFAULT_ADMIN_ROLE)</div></div>
+      </div>
+      <div class="card-body">
+        <div class="fg fg2">
+          <div class="field">
+            <label>Label da Instituição</label>
+            <input type="text" id="instLabel" placeholder="Ex: usp, biomuseu, unam"/>
+            <span class="hint">Subdomínio: &lt;label&gt;.axolodao2.eth</span>
+          </div>
+          <div class="field">
+            <label>Role associado</label>
+            <select id="instRole">
+              <option value="">— Selecione —</option>
+              <option value="caretaker">CARETAKER_ROLE</option>
+              <option value="auditor">AUDITOR_ROLE</option>
+            </select>
+          </div>
+          <div class="field fc">
+            <label>Endereço do Gerente</label>
+            <input type="text" id="instGerente" placeholder="0x..."/>
+            <span class="hint">Carteira que receberá a ownership do subdomínio ENS e poderá registrar membros</span>
+          </div>
+          <div class="field">
+            <label>Node calculado (preview)</label>
+            <input type="text" id="instNodePreview" readonly style="font-family:var(--mono);font-size:11px;color:var(--ink3)"/>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-p" id="btnAddInst" disabled>Adicionar Instituição</button>
+        </div>
+        <div style="margin-top:16px">
+          <div class="log" id="logInst">
+            <div class="ll"><span class="lt">--:--:--</span><span class="lm if">Aguardando carteira conectada (admin)...</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Desativar Instituição -->
+    <div class="card">
+      <div class="card-head">
+        <div><div class="card-title">Desativar Instituição</div><div class="card-sub">Remove o acesso de uma instituição sem apagar o domínio do ENS</div></div>
+      </div>
+      <div class="card-body">
+        <div class="fg fg2">
+          <div class="field">
+            <label>Label da Instituição a desativar</label>
+            <input type="text" id="instDeactLabel" placeholder="Ex: unam"/>
+            <span class="hint">Será calculado o parentNode e chamado removerInstituicao</span>
+          </div>
+          <div class="field">
+            <label>Node calculado (preview)</label>
+            <input type="text" id="instDeactNodePreview" readonly style="font-family:var(--mono);font-size:11px;color:var(--ink3)"/>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-s" id="btnDeactInst" disabled>Desativar Instituição</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Consultar Instituição -->
+    <div class="card">
+      <div class="card-head">
+        <div><div class="card-title">Consultar Instituição</div><div class="card-sub">Verifica se um subdomínio está registrado e ativo</div></div>
+      </div>
+      <div class="card-body">
+        <div class="fg fg2">
+          <div class="field">
+            <label>Label da Instituição</label>
+            <input type="text" id="instQueryLabel" placeholder="Ex: biomuseu"/>
+          </div>
+          <div class="field" style="display:flex;align-items:flex-end">
+            <button class="btn btn-s" id="btnQueryInst" disabled>Consultar</button>
+          </div>
+        </div>
+        <div id="instQueryResult" style="display:none;margin-top:20px">
+          <div class="divider">Resultado</div>
+          <div class="dg" id="instQueryGrid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE: Registrar Membros (gerente institucional) ══ -->
+  <div class="content" id="page-usuarios">
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Registrar Membro na Instituição</div>
+          <div class="card-sub">Gerente institucional cria o subdomínio ENS do membro e configura o resolver — 4 transações sequenciais</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="fg fg2">
+          <div class="field">
+            <label>Label da Instituição</label>
+            <input type="text" id="userInstLabel" placeholder="Ex: usp, biomuseu"/>
+            <span class="hint">Deve ser gerente desta instituição</span>
+          </div>
+          <div class="field">
+            <label>Label do Membro</label>
+            <input type="text" id="userLabel" placeholder="Ex: joao, ana"/>
+            <span class="hint">Primeiro nível do subdomínio do membro</span>
+          </div>
+          <div class="field fc">
+            <label>Carteira do Membro</label>
+            <input type="text" id="userAddress" placeholder="0x..."/>
+            <span class="hint">Endereço que será vinculado ao subdomínio ENS e receberá a ownership</span>
+          </div>
+          <div class="field fc">
+            <label>Resolver ENS Público</label>
+            <input type="text" id="userResolverAddr" value="0xE99638b40E4Fff0129D56f03b55b6bbC4BBE49b5"/>
+            <span class="hint">Endereço do Public Resolver na rede (padrão: Sepolia)</span>
+          </div>
+          <div class="field">
+            <label>Nome ENS completo (preview)</label>
+            <input type="text" id="userEnsPreview" readonly style="background:var(--teal-l);color:var(--teal);font-family:var(--mono);font-size:13px"/>
+          </div>
+          <div class="field">
+            <label>parentNode (bytes32)</label>
+            <input type="text" id="userParentNode" readonly style="font-family:var(--mono);font-size:11px;color:var(--ink3)"/>
+          </div>
+          <div class="field fc">
+            <label>userNode (bytes32)</label>
+            <input type="text" id="userNode" readonly style="font-family:var(--mono);font-size:11px;color:var(--ink3)"/>
+          </div>
+        </div>
+
+        <div style="background:var(--amber-l);border:1px solid #f0d080;border-radius:8px;padding:12px 16px;margin-top:4px;font-size:12px;color:var(--amber)">
+          <strong>Fluxo de 4 transações:</strong><br/>
+          1. <code>setSubnodeOwner(parentNode, userLabelHash, <em>gerente</em>)</code> — cria o subdomínio (gerente como dono temporário)<br/>
+          2. <code>setResolver(userNode, resolverAddr)</code> — configura o resolver<br/>
+          3. <code>resolver.setAddr(userNode, userAddress)</code> — associa a carteira ao nome<br/>
+          4. <code>setSubnodeOwner(parentNode, userLabelHash, <em>userAddress</em>)</code> — transfere ownership ao membro
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-p" id="btnRegUser" disabled>Registrar Membro</button>
+        </div>
+        <div style="margin-top:16px">
+          <div class="log" id="logRegUser">
+            <div class="ll"><span class="lt">--:--:--</span><span class="lm if">Aguardando carteira conectada (gerente)...</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ PAGE: Verificar Contrato ══ -->
+  <div class="content" id="page-constantes">
+    <div class="card">
+      <div class="card-head">
+        <div><div class="card-title">Constantes do AxoloAccess</div><div class="card-sub">Valida namehashes e endereços diretamente do contrato deployado</div></div>
+        <button class="btn btn-s btn-sm" id="btnLoadConsts">Carregar</button>
+      </div>
+      <div class="card-body">
+        <div id="constsBody">
+          <div class="empty"><div class="empty-i">&#x1F50D;</div><div>Clique em Carregar para ler as constantes do contrato</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title">Contratos Deployados</div></div>
+      <div class="card-body" style="padding:0" id="contractsTable">
+        <div class="empty"><div class="empty-i">&#x1F4CB;</div><div>Endereços serão exibidos após conectar</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title">EAS — Endereço e Schemas</div><div class="card-sub">Schemas registrados nos contratos AxoloRegistry e AxoloMonitoring</div><button class="btn btn-s btn-sm" id="btnLoadEAS">Carregar EAS</button></div>
+      <div class="card-body">
+        <div id="easBody">
+          <div class="empty"><div class="empty-i">&#x1F517;</div><div>Clique em Carregar EAS para ler os schemas dos contratos</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title">Status do Backend Relayer</div><button class="btn btn-s btn-sm" id="btnCheckRelay">Verificar</button></div>
+      <div class="card-body">
+        <div id="relayDetail">
+          <div class="empty"><div class="empty-i">&#x2699;&#xFE0F;</div><div>Clique em Verificar para consultar o relayer</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE: Tanques ══ -->
+  <div class="content" id="page-tanques">
+    <div class="card">
+      <div class="card-head"><div><div class="card-title">Cadastrar Tanque</div><div class="card-sub">Requer CARETAKER_ROLE</div></div></div>
+      <div class="card-body">
+        <div class="fg fg2">
+          <div class="field"><label>Nome</label><input type="text" id="tName" placeholder="Ex: Tanque Principal A"/></div>
+          <div class="field"><label>Localização</label><input type="text" id="tLoc" placeholder="Ex: Sala 2 — Prateleira B"/></div>
+        </div>
+        <div class="btn-row"><button class="btn btn-p" id="btnRegTank" disabled>Cadastrar Tanque</button></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title">Tanques Registrados</div><button class="btn btn-s btn-sm" id="btnLoadTanks">&#x21BB; Atualizar</button></div>
+      <div class="card-body" style="padding:0">
+        <div class="tw"><table>
+          <thead><tr><th>ID</th><th>Nome</th><th>Localização</th><th>Por</th><th>Data</th><th>Status</th><th>Axolotes</th><th>Atestação</th></tr></thead>
+          <tbody id="tbTanks"><tr><td colspan="8"><div class="empty"><div class="empty-i">&#x1FAA3;</div><div>Conecte a carteira e clique em Atualizar</div></div></td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE: Axolotes ══ -->
+  <div class="content" id="page-axolotes">
+    <div class="card">
+      <div class="card-head"><div><div class="card-title">Cadastrar Axolote</div><div class="card-sub">Requer CARETAKER_ROLE</div></div></div>
+      <div class="card-body">
+        <div class="fg fg3">
+          <div class="field"><label>Nome</label><input type="text" id="aName" placeholder="Ex: Totli"/></div>
+          <div class="field"><label>Espécie</label><input type="text" id="aSpecies" placeholder="Ex: Ambystoma mexicanum"/></div>
+          <div class="field"><label>Data de Nascimento</label><input type="date" id="aBirth"/></div>
+          <div class="field"><label>Tanque</label><select id="aTankId"><option value="">— Selecione —</option></select></div>
+          <div class="field"><label>Dados Morfológicos</label><input type="text" id="aMorph" placeholder="Ex: Leucístico, 18cm"/></div>
+          <div class="field">
+            <label>Hash da Foto (bytes32)</label>
+            <input type="text" id="aPhoto" placeholder="0x0000...0001"/>
+            <span class="hint">Obrigatório — use 0x0000...0001 se não houver foto</span>
+          </div>
+        </div>
+        <div class="btn-row"><button class="btn btn-p" id="btnRegAxo" disabled>Cadastrar Axolote</button></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title">Buscar Axolote por ID</div></div>
+      <div class="card-body">
+        <div style="display:flex;gap:10px;align-items:flex-end">
+          <div class="field" style="flex:0 0 140px"><label>ID</label><input type="number" id="aSearchId" placeholder="1" min="1"/></div>
+          <button class="btn btn-s" id="btnSearchAxo" disabled>Buscar</button>
+        </div>
+        <div id="axoDetail" style="display:none;margin-top:18px"><div class="dg" id="axoDetailGrid"></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Axolotes por Tanque</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="axoTankFilter" style="width:190px;padding:6px 10px;font-size:12px"><option value="">— Selecione tanque —</option></select>
+          <button class="btn btn-s btn-sm" id="btnLoadAxos">Buscar</button>
+        </div>
+      </div>
+      <div class="card-body" style="padding:0">
+        <div class="tw"><table>
+          <thead><tr><th>ID</th><th>Nome</th><th>Espécie</th><th>Nascimento</th><th>Morfologia</th><th>Status</th></tr></thead>
+          <tbody id="tbAxos"><tr><td colspan="6"><div class="empty"><div class="empty-i">&#x1F98E;</div><div>Selecione um tanque para listar</div></div></td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE: Medições ══ -->
+  <div class="content" id="page-medicoes">
+    <div class="card">
+      <div class="card-head"><div><div class="card-title">Registrar Medição Ambiental</div><div class="card-sub">Requer CARETAKER_ROLE — valores × 100 (ex: 19,50°C → 1950)</div></div></div>
+      <div class="card-body">
+        <div class="fg fg2" style="margin-bottom:14px">
+          <div class="field"><label>Tanque</label><select id="mTankId"><option value="">— Selecione —</option></select></div>
+        </div>
+        <div class="fg fg4">
+          <div class="field"><label class="lbl-unit">Temperatura <span class="unit">°C×100</span></label><input type="number" id="mTemp" placeholder="1950"/></div>
+          <div class="field"><label class="lbl-unit">pH <span class="unit">×100</span></label><input type="number" id="mPh" placeholder="720"/></div>
+          <div class="field"><label class="lbl-unit">O&#8322; Dissolvido <span class="unit">mg/L×100</span></label><input type="number" id="mO2" placeholder="710"/></div>
+          <div class="field"><label class="lbl-unit">Condutividade <span class="unit">µS/cm×100</span></label><input type="number" id="mCond" placeholder="30000"/></div>
+          <div class="field"><label class="lbl-unit">Turbidez <span class="unit">NTU×100</span></label><input type="number" id="mTurb" placeholder="100"/></div>
+          <div class="field"><label class="lbl-unit">Fosfatos <span class="unit">mg/L×100</span></label><input type="number" id="mPhos" placeholder="50"/></div>
+          <div class="field"><label class="lbl-unit">NO&#8322; <span class="unit">mg/L×100</span></label><input type="number" id="mNo2" placeholder="3"/></div>
+          <div class="field"><label class="lbl-unit">NO&#8323; <span class="unit">mg/L×100</span></label><input type="number" id="mNo3" placeholder="1000"/></div>
+          <div class="field"><label class="lbl-unit">NH&#8323; <span class="unit">mg/L×100</span></label><input type="number" id="mNh3" placeholder="2"/></div>
+          <div class="field"><label class="lbl-unit">Dureza GH <span class="unit">dGH×100</span></label><input type="number" id="mGh" placeholder="800"/></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-p" id="btnRegMed" disabled>Registrar Medição</button>
+          <button class="btn btn-s btn-sm" id="btnFillTest">Preencher Teste</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Validar / Contestar -->
+    <div class="card">
+      <div class="card-head"><div><div class="card-title">Validar ou Contestar Medição</div><div class="card-sub">Requer AUDITOR_ROLE</div></div></div>
+      <div class="card-body">
+        <div class="fg fg2">
+          <div class="field"><label>ID da Medição</label><input type="number" id="vMedId" placeholder="1" min="1"/></div>
+          <div class="field"><label>Motivo (obrigatório para contestar)</label><input type="text" id="vReason" placeholder="Ex: Temperatura fora do intervalo ideal"/></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-p" id="btnValidate" disabled>&#x2713; Validar</button>
+          <button class="btn btn-d" id="btnContest" disabled>&#x2717; Contestar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Consultar -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Consultar Medições</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <select id="mFilterTank" style="width:180px;padding:6px 10px;font-size:12px"><option value="">— Filtrar por tanque —</option></select>
+          <input type="number" id="mFilterId" placeholder="ID específico" style="width:130px;padding:6px 10px;font-size:12px"/>
+          <button class="btn btn-s btn-sm" id="btnLoadMed">Buscar</button>
+        </div>
+      </div>
+      <div class="card-body" style="padding:0">
+        <div class="tw"><table>
+          <thead><tr><th>ID</th><th>Tanque</th><th>Temp</th><th>pH</th><th>O&#8322;</th><th>NH&#8323;</th><th>Status</th><th>Registrado</th><th>Validator</th><th>Atestação</th></tr></thead>
+          <tbody id="tbMed"><tr><td colspan="10"><div class="empty"><div class="empty-i">&#x1F4CA;</div><div>Use os filtros para buscar medições</div></div></td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- Status do Tanque -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Status do Tanque (ponteiros)</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="tsFilterTank" style="width:190px;padding:6px 10px;font-size:12px"><option value="">— Selecione —</option></select>
+          <button class="btn btn-s btn-sm" id="btnLoadTs">Ver Status</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="tsResult" style="display:none">
+          <div class="dg">
+            <div class="di"><span class="dl">Último Pending ID</span><span class="dv accent" id="tsLastPending">&mdash;</span></div>
+            <div class="di"><span class="dl">Último Validated ID</span><span class="dv accent" id="tsLastValidated">&mdash;</span></div>
+            <div class="di"><span class="dl">Total Medições</span><span class="dv" id="tsTotal">&mdash;</span></div>
+          </div>
+        </div>
+        <div id="tsEmpty" class="empty" style="padding:20px"><div>Selecione um tanque para ver os ponteiros de status</div></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+<div id="toast"></div>
+
+<script>
+// ╔═══════════════════════════════════════════════════════════════════════════╗
+// ║  AxoloDAO v5 — Frontend com Backend Relayer Próprio                      ║
+// ║  Sem dependência do Gelato. Transações gasless via relayer local.         ║
+// ╚═══════════════════════════════════════════════════════════════════════════╝
+
+// ─── Configuration ──────────────────────────────────────────────────────────
+// UPDATE THESE after redeploying contracts with the RELAYER_WALLET as forwarder
+const ADDR = {
+  access:     "0x0090c33274dc0f48c20997f8b273f40c5abfa973",
+  registry:   "0x5725ef787b437e398fd7dade7bd3e425bbf81f48",
+  monitoring: "0x7fa54f7616b7e9f9e08b6295ec1df95aa3da00a9",
+};
+
+const RELAYER_URL = 'http://localhost:3000';
+
+// ─── ABIs (read functions only — write functions go through the relayer) ─────
+
+const ABI_ACCESS = [{"inputs":[],"name":"AUDITOR_ROLE","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"CARETAKER_ROLE","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"DEFAULT_ADMIN_ROLE","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"AXOLODAO_NODE","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"ENS_REGISTRY","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"ensName","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"role","type":"bytes32"}],"name":"getRoleAdmin","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"role","type":"bytes32"},{"internalType":"address","name":"account","type":"address"}],"name":"hasRole","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"string","name":"label","type":"string"},{"internalType":"bytes32","name":"parentNode","type":"bytes32"}],"name":"registrarAcesso","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes32","name":"role","type":"bytes32"},{"internalType":"address","name":"account","type":"address"}],"name":"grantRole","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"string","name":"labelInst","type":"string"},{"internalType":"bytes32","name":"role","type":"bytes32"},{"internalType":"address","name":"gerente","type":"address"}],"name":"adicionarInstituicao","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes32","name":"parentNode","type":"bytes32"}],"name":"removerInstituicao","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"name":"instituicoes","outputs":[{"internalType":"bytes32","name":"role","type":"bytes32"},{"internalType":"string","name":"label","type":"string"},{"internalType":"bool","name":"ativa","type":"bool"},{"internalType":"address","name":"gerente","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"name":"gerentePorNode","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"}];
+
+const ABI_REGISTRY = [{"inputs":[],"name":"CARETAKER_ROLE","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"accessControl","outputs":[{"internalType":"contract AxoloAccess","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"axolotlCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"axolotlId","type":"uint256"}],"name":"deactivateAxolotl","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"tankId","type":"uint256"}],"name":"deactivateTank","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"axolotlId","type":"uint256"}],"name":"getAxolotl","outputs":[{"components":[{"internalType":"uint256","name":"id","type":"uint256"},{"internalType":"string","name":"name","type":"string"},{"internalType":"string","name":"species","type":"string"},{"internalType":"uint256","name":"birthDate","type":"uint256"},{"internalType":"uint256","name":"tankId","type":"uint256"},{"internalType":"string","name":"morphData","type":"string"},{"internalType":"bytes32","name":"photoHash","type":"bytes32"},{"internalType":"address","name":"registeredBy","type":"address"},{"internalType":"uint256","name":"registeredAt","type":"uint256"},{"internalType":"bool","name":"active","type":"bool"},{"internalType":"bytes32","name":"attestationUID","type":"bytes32"}],"internalType":"struct AxoloRegistry.Axolotl","name":"","type":"tuple"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"tankId","type":"uint256"}],"name":"getAxolotlsInTank","outputs":[{"internalType":"uint256[]","name":"","type":"uint256[]"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"tankId","type":"uint256"}],"name":"getTank","outputs":[{"components":[{"internalType":"uint256","name":"id","type":"uint256"},{"internalType":"string","name":"name","type":"string"},{"internalType":"string","name":"location","type":"string"},{"internalType":"address","name":"registeredBy","type":"address"},{"internalType":"uint256","name":"registeredAt","type":"uint256"},{"internalType":"bool","name":"active","type":"bool"},{"internalType":"bytes32","name":"attestationUID","type":"bytes32"}],"internalType":"struct AxoloRegistry.Tank","name":"","type":"tuple"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"nextAxolotlId","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"nextTankId","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"string","name":"name","type":"string"},{"internalType":"string","name":"species","type":"string"},{"internalType":"uint256","name":"birthDate","type":"uint256"},{"internalType":"uint256","name":"tankId","type":"uint256"},{"internalType":"string","name":"morphData","type":"string"},{"internalType":"bytes32","name":"photoHash","type":"bytes32"}],"name":"registerAxolotl","outputs":[{"internalType":"uint256","name":"axolotlId","type":"uint256"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"string","name":"name","type":"string"},{"internalType":"string","name":"location","type":"string"}],"name":"registerTank","outputs":[{"internalType":"uint256","name":"tankId","type":"uint256"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"tankCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"axolotlId","type":"uint256"},{"internalType":"uint256","name":"newTankId","type":"uint256"}],"name":"transferAxolotl","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"axolotlId","type":"uint256"},{"internalType":"string","name":"newName","type":"string"},{"internalType":"string","name":"newMorphData","type":"string"},{"internalType":"bytes32","name":"newPhotoHash","type":"bytes32"}],"name":"updateAxolotl","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"tankId","type":"uint256"},{"internalType":"string","name":"newName","type":"string"},{"internalType":"string","name":"newLocation","type":"string"}],"name":"updateTank","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"eas","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"tankSchemaUID","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"axolotlSchemaUID","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"transferSchemaUID","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"deactivateSchemaUID","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"}];
+
+const ABI_MONITORING = [{"inputs":[],"name":"AUDITOR_ROLE","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"CARETAKER_ROLE","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"measurementId","type":"uint256"},{"internalType":"string","name":"reason","type":"string"}],"name":"contestMeasurement","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"tankId","type":"uint256"}],"name":"getLastValidatedMeasurement","outputs":[{"components":[{"internalType":"uint256","name":"id","type":"uint256"},{"internalType":"uint256","name":"tankId","type":"uint256"},{"internalType":"address","name":"recorder","type":"address"},{"internalType":"uint256","name":"timestamp","type":"uint256"},{"internalType":"uint16","name":"temperature","type":"uint16"},{"internalType":"uint16","name":"ph","type":"uint16"},{"internalType":"uint16","name":"dissolvedOxygen","type":"uint16"},{"internalType":"uint16","name":"conductivity","type":"uint16"},{"internalType":"uint16","name":"turbidity","type":"uint16"},{"internalType":"uint16","name":"phosphates","type":"uint16"},{"internalType":"uint16","name":"no2","type":"uint16"},{"internalType":"uint16","name":"no3","type":"uint16"},{"internalType":"uint16","name":"ammonia","type":"uint16"},{"internalType":"uint16","name":"hardness","type":"uint16"},{"internalType":"uint8","name":"status","type":"uint8"},{"internalType":"address","name":"validator","type":"address"},{"internalType":"uint256","name":"validatedAt","type":"uint256"},{"internalType":"string","name":"contestReason","type":"string"},{"internalType":"bytes32","name":"attestationUID","type":"bytes32"}],"internalType":"struct AxoloMonitoring.Measurement","name":"","type":"tuple"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"measurementId","type":"uint256"}],"name":"getMeasurement","outputs":[{"components":[{"internalType":"uint256","name":"id","type":"uint256"},{"internalType":"uint256","name":"tankId","type":"uint256"},{"internalType":"address","name":"recorder","type":"address"},{"internalType":"uint256","name":"timestamp","type":"uint256"},{"internalType":"uint16","name":"temperature","type":"uint16"},{"internalType":"uint16","name":"ph","type":"uint16"},{"internalType":"uint16","name":"dissolvedOxygen","type":"uint16"},{"internalType":"uint16","name":"conductivity","type":"uint16"},{"internalType":"uint16","name":"turbidity","type":"uint16"},{"internalType":"uint16","name":"phosphates","type":"uint16"},{"internalType":"uint16","name":"no2","type":"uint16"},{"internalType":"uint16","name":"no3","type":"uint16"},{"internalType":"uint16","name":"ammonia","type":"uint16"},{"internalType":"uint16","name":"hardness","type":"uint16"},{"internalType":"uint8","name":"status","type":"uint8"},{"internalType":"address","name":"validator","type":"address"},{"internalType":"uint256","name":"validatedAt","type":"uint256"},{"internalType":"string","name":"contestReason","type":"string"},{"internalType":"bytes32","name":"attestationUID","type":"bytes32"}],"internalType":"struct AxoloMonitoring.Measurement","name":"","type":"tuple"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"tankId","type":"uint256"}],"name":"getTankStatus","outputs":[{"components":[{"internalType":"uint256","name":"lastPendingId","type":"uint256"},{"internalType":"uint256","name":"lastValidatedId","type":"uint256"},{"internalType":"uint256","name":"totalMeasurements","type":"uint256"}],"internalType":"struct AxoloMonitoring.TankStatus","name":"","type":"tuple"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"measurementCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"nextMeasurementId","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"components":[{"internalType":"uint256","name":"tankId","type":"uint256"},{"internalType":"uint16","name":"temperature","type":"uint16"},{"internalType":"uint16","name":"ph","type":"uint16"},{"internalType":"uint16","name":"dissolvedOxygen","type":"uint16"},{"internalType":"uint16","name":"conductivity","type":"uint16"},{"internalType":"uint16","name":"turbidity","type":"uint16"},{"internalType":"uint16","name":"phosphates","type":"uint16"},{"internalType":"uint16","name":"no2","type":"uint16"},{"internalType":"uint16","name":"no3","type":"uint16"},{"internalType":"uint16","name":"ammonia","type":"uint16"},{"internalType":"uint16","name":"hardness","type":"uint16"}],"internalType":"struct AxoloMonitoring.MeasurementParams","name":"p","type":"tuple"}],"name":"recordMeasurement","outputs":[{"internalType":"uint256","name":"measurementId","type":"uint256"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"measurementId","type":"uint256"}],"name":"validateMeasurement","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"eas","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"measurementSchemaUID","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"}];
+
+// ── State ────────────────────────────────────────────────────────────────────
+let provider=null, signer=null, cA=null, cR=null, cM=null, addr=null;
+let cachedTanks=[];
+let relayerOnline = false;
+
+// ── Utils ────────────────────────────────────────────────────────────────────
+const short = a => a?a.slice(0,6)+'…'+a.slice(-4):'—';
+const fmtTs = ts => ts?new Date(Number(ts)*1000).toLocaleDateString('pt-BR'):'—';
+const fmtV  = v  => v!==undefined?(Number(v)/100).toFixed(2):'—';
+const now   = ()  => new Date().toLocaleTimeString('pt-BR',{hour12:false});
+
+const easAttest = uid => (uid && uid !== ethers.ZeroHash)
+  ? '<a href="https://sepolia.easscan.org/attestation/view/'+uid+'" target="_blank" style="color:var(--teal);font-family:var(--mono);font-size:10px">'+uid.slice(0,10)+'…</a>'
+  : '—';
+
+function statusBadge(s){
+  const m={0:'b-pending|Pendente',1:'b-validated|Validada',2:'b-contested|Contestada'};
+  const[c,t]=(m[s]||'b-inactive|?').split('|');
+  return '<span class="badge '+c+'">'+t+'</span>';
+}
+
+let toastT=null;
+function toast(msg,type='ok',dur=4000){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className=type; el.style.display='block';
+  clearTimeout(toastT); toastT=setTimeout(()=>el.style.display='none',dur);
+}
+
+function logLine(containerId,msg,type='if'){
+  const el=document.getElementById(containerId);
+  const d=document.createElement('div'); d.className='ll';
+  d.innerHTML='<span class="lt">'+now()+'</span><span class="lm '+type+'">'+msg+'</span>';
+  el.appendChild(d); el.scrollTop=el.scrollHeight;
+}
+
+function setBusy(btn,busy,label=''){
+  if(busy){btn._t=btn.innerHTML;btn.innerHTML='<div class="sp"></div> Processando…';btn.disabled=true;}
+  else{btn.innerHTML=btn._t||label;btn.disabled=false;}
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// RELAYER — substitui completamente o Gelato Relay
+// ══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * relayWrite — envia uma transação gasless via backend relayer próprio.
+ *
+ * 1. Encoda o calldata usando a interface do contrato
+ * 2. Pede ao MetaMask para assinar o calldata com personal_sign
+ * 3. Envia POST para o backend relayer local
+ * 4. O backend verifica assinatura, verifica role, e executa on-chain
+ * 5. Retorna o txHash diretamente (sem polling — o backend espera confirmação)
+ *
+ * @param {ethers.Contract} contractInstance  instância com signer
+ * @param {string}          method            nome do método
+ * @param {Array}           args              argumentos
+ * @returns {string}        txHash
+ */
+async function relayWrite(contractInstance, method, args) {
+  if (!relayerOnline) {
+    throw new Error('Backend relayer offline. Execute: node server.js');
+  }
+
+  const iface  = contractInstance.interface;
+  const data   = iface.encodeFunctionData(method, args);
+  const target = await contractInstance.getAddress();
+  const user   = await signer.getAddress();
+
+  console.log('[Relay 1/3] Calldata encodado, pedindo assinatura...');
+
+  // Assinatura simples — MetaMask mostra confirmação ao usuário
+  const signature = await signer.signMessage(ethers.getBytes(data));
+  console.log('[Relay 2/3] Assinatura obtida, enviando ao relayer...');
+
+  // POST para o backend relayer
+  const res = await fetch(RELAYER_URL + '/relay', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ target, data, user, signature }),
+  });
+
+  const json = await res.json();
+
+  if (!res.ok) {
+    console.error('[Relay ERROR]', json);
+    throw new Error(json.message || 'Relay error ' + res.status);
+  }
+
+  console.log('[Relay 3/3] TX confirmada:', json.txHash);
+  return json.txHash;
+}
+
+// ── Relayer health check ────────────────────────────────────────────────────
+async function checkRelayer() {
+  const dot  = document.getElementById('rdot');
+  const info = document.getElementById('relayInfo');
+  try {
+    const res  = await fetch(RELAYER_URL + '/health');
+    const data = await res.json();
+    if (data.status === 'ok') {
+      dot.className  = 'rdot ok';
+      info.textContent = data.balance;
+      relayerOnline = true;
+      return data;
+    }
+  } catch {}
+  dot.className  = 'rdot bad';
+  info.textContent = 'Offline';
+  relayerOnline = false;
+  return null;
+}
+
+// Check relayer on load and every 30 seconds
+checkRelayer();
+setInterval(checkRelayer, 30000);
+
+// ── Connect ──────────────────────────────────────────────────────────────────
+async function connect(){
+  if(!window.ethereum){toast('MetaMask não encontrada.','er');return;}
+  try{
+    provider=new ethers.BrowserProvider(window.ethereum);
+    await provider.send('eth_requestAccounts',[]);
+    signer=await provider.getSigner();
+    addr=await signer.getAddress();
+    cA=new ethers.Contract(ADDR.access,    ABI_ACCESS,    signer);
+    cR=new ethers.Contract(ADDR.registry,  ABI_REGISTRY,  signer);
+    cM=new ethers.Contract(ADDR.monitoring,ABI_MONITORING,signer);
+
+    const net=await provider.getNetwork();
+    const ok=net.chainId===11155111n;
+    document.getElementById('wdot').className='wdot '+(ok?'ok':'warn');
+    document.getElementById('waddr').textContent=short(addr);
+    const ne=document.getElementById('wnet');
+    ne.textContent=ok?'Sepolia':'chainId '+net.chainId;
+    ne.className='w-net '+(ok?'ok':'bad');
+    const bc=document.getElementById('btnConnect');
+    bc.textContent='Conectado'; bc.disabled=true;
+
+    // Update contracts table
+    document.getElementById('contractsTable').innerHTML='<table><thead><tr><th>Contrato</th><th>Endereço</th><th>Etherscan</th></tr></thead><tbody>'+
+      '<tr><td><strong>AxoloAccess</strong></td><td class="td-mono">'+ADDR.access+'</td><td><a href="https://sepolia.etherscan.io/address/'+ADDR.access+'" target="_blank" style="color:var(--teal);font-size:12px">Ver</a></td></tr>'+
+      '<tr><td><strong>AxoloRegistry</strong></td><td class="td-mono">'+ADDR.registry+'</td><td><a href="https://sepolia.etherscan.io/address/'+ADDR.registry+'" target="_blank" style="color:var(--teal);font-size:12px">Ver</a></td></tr>'+
+      '<tr><td><strong>AxoloMonitoring</strong></td><td class="td-mono">'+ADDR.monitoring+'</td><td><a href="https://sepolia.etherscan.io/address/'+ADDR.monitoring+'" target="_blank" style="color:var(--teal);font-size:12px">Ver</a></td></tr>'+
+      '</tbody></table>';
+
+    await loadRoles();
+    await loadTanksCache();
+    enableAll();
+    logLine('logAccess','Carteira: '+short(addr),'ok');
+    logLine('logAccess','Rede: Sepolia ('+net.chainId+')','ok');
+    logLine('logAccess','Relayer: '+(relayerOnline?'Online':'Offline — execute node server.js'),relayerOnline?'ok':'wn');
+    logLine('logAccess','Pronto. Preencha label e instituição para registrar.','if');
+    toast('Conectado: '+short(addr));
+    window.ethereum.on('accountsChanged',()=>location.reload());
+    window.ethereum.on('chainChanged',()=>location.reload());
+  }catch(e){toast('Erro: '+(e.message||e),'er');}
+}
+
+async function loadRoles(){
+  try{
+    const[CR,AR,DAR]=await Promise.all([cA.CARETAKER_ROLE(),cA.AUDITOR_ROLE(),cA.DEFAULT_ADMIN_ROLE()]);
+    const[isC,isA,isD]=await Promise.all([cA.hasRole(CR,addr),cA.hasRole(AR,addr),cA.hasRole(DAR,addr)]);
+    const p=document.getElementById('rolePills');
+    if(!isC&&!isA&&!isD){p.innerHTML='<span class="pill none">Sem roles</span>';return;}
+    let h='';
+    if(isD)h+='<span class="pill admin">ADMIN</span>';
+    if(isC)h+='<span class="pill caretaker">CARETAKER</span>';
+    if(isA)h+='<span class="pill auditor">AUDITOR</span>';
+    p.innerHTML=h;
+  }catch{}
+}
+
+function enableAll(){
+  ['btnRegAccess','btnVerify','btnRegTank','btnRegAxo','btnSearchAxo',
+   'btnRegMed','btnValidate','btnContest',
+   'btnAddInst','btnDeactInst','btnQueryInst','btnRegUser'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.disabled=false;
+  });
+}
+
+// ── Tank cache ───────────────────────────────────────────────────────────────
+async function loadTanksCache(){
+  try{
+    const n=await cR.nextTankId(); cachedTanks=[];
+    for(let i=1;i<Number(n);i++){
+      try{const t=await cR.getTank(i);if(t.active)cachedTanks.push({id:Number(t.id),name:t.name});}catch{}
+    }
+    ['aTankId','axoTankFilter','mTankId','mFilterTank','tsFilterTank'].forEach(id=>{
+      const s=document.getElementById(id);
+      while(s.options.length>1)s.remove(1);
+      cachedTanks.forEach(t=>s.add(new Option('#'+t.id+' — '+t.name,t.id)));
+    });
+  }catch{}
+}
+
+// ── ENS Preview ──────────────────────────────────────────────────────────────
+function updEnsPreview(){
+  const lb=document.getElementById('ensLabel').value.trim().toLowerCase();
+  const it=document.getElementById('ensInst').value.trim().toLowerCase();
+  if(lb&&it){
+    document.getElementById('ensPreview').value=lb+'.'+it+'.axolodao2.eth';
+    document.getElementById('ensParent').value=ethers.namehash(it+'.axolodao2.eth');
+  }else{
+    document.getElementById('ensPreview').value='';
+    document.getElementById('ensParent').value='';
+  }
+}
+document.getElementById('ensLabel').addEventListener('input',updEnsPreview);
+document.getElementById('ensInst').addEventListener('input',updEnsPreview);
+
+// ── Registrar Acesso ─────────────────────────────────────────────────────────
+document.getElementById('btnRegAccess').addEventListener('click',async()=>{
+  const lb=document.getElementById('ensLabel').value.trim().toLowerCase();
+  const it=document.getElementById('ensInst').value.trim().toLowerCase();
+  if(!lb||!it){toast('Preencha label e instituição.','wn');return;}
+  const pn=ethers.namehash(it+'.axolodao2.eth');
+  const btn=document.getElementById('btnRegAccess');
+  setBusy(btn,true);
+  logLine('logAccess','Iniciando registrarAcesso("'+lb+'", '+pn.slice(0,10)+'...)','if');
+  logLine('logAccess','Nome ENS: '+lb+'.'+it+'.axolodao2.eth','if');
+  try{
+    logLine('logAccess','Enviando via relayer local…','wn');
+    const txHash = await relayWrite(cA, 'registrarAcesso', [lb, pn]);
+    logLine('logAccess','TX: <a href="https://sepolia.etherscan.io/tx/'+txHash+'" target="_blank" style="color:#4dd9cc">'+txHash.slice(0,16)+'…</a>','ok');
+    logLine('logAccess','Role concedido com sucesso.','ok');
+    toast('Acesso registrado!');
+    await loadRoles();
+  }catch(e){
+    const m=e?.reason||e?.message||String(e);
+    logLine('logAccess','Erro: '+m,'er');
+    if(m.includes('resolver'))logLine('logAccess','Resolver não configurado no ENS App.','wn');
+    if(m.includes('corresponde'))logLine('logAccess','ENS aponta para outro endereço.','wn');
+    if(m.includes('dominio'))logLine('logAccess','Domínio pai não reconhecido.','wn');
+    if(m.includes('offline')||m.includes('fetch'))logLine('logAccess','Backend relayer não está rodando. Execute: node server.js','er');
+    toast('Erro: '+m,'er');
+  }finally{setBusy(btn,false,'Registrar Acesso');}
+});
+
+// ── Verificar Roles ──────────────────────────────────────────────────────────
+document.getElementById('btnUseMine').addEventListener('click',()=>{
+  if(addr)document.getElementById('verifyAddr').value=addr;
+});
+
+document.getElementById('btnVerify').addEventListener('click',async()=>{
+  const raw=document.getElementById('verifyAddr').value.trim();
+  if(!raw){toast('Digite um endereço.','wn');return;}
+  let ca; try{ca=ethers.getAddress(raw);}catch{toast('Endereço inválido.','er');return;}
+  try{
+    const[CR,AR,DAR]=await Promise.all([cA.CARETAKER_ROLE(),cA.AUDITOR_ROLE(),cA.DEFAULT_ADMIN_ROLE()]);
+    const[isC,isA,isD,ens]=await Promise.all([
+      cA.hasRole(CR,ca),cA.hasRole(AR,ca),cA.hasRole(DAR,ca),cA.ensName(ca)
+    ]);
+    const yesNo=v=>v?'<span class="badge b-validated">Sim</span>':'<span class="badge b-inactive">Não</span>';
+    document.getElementById('verifyResult').style.display='block';
+    document.getElementById('verifyGrid').innerHTML=
+      '<div class="di"><span class="dl">Endereço</span><span class="dv mono">'+short(ca)+'</span></div>'+
+      '<div class="di"><span class="dl">ENS Name</span><span class="dv accent">'+(ens||'(nenhum registrado)')+'</span></div>'+
+      '<div class="di"><span class="dl">DEFAULT_ADMIN</span><span class="dv">'+yesNo(isD)+'</span></div>'+
+      '<div class="di"><span class="dl">CARETAKER_ROLE</span><span class="dv">'+yesNo(isC)+'</span></div>'+
+      '<div class="di"><span class="dl">AUDITOR_ROLE</span><span class="dv">'+yesNo(isA)+'</span></div>';
+  }catch(e){toast('Erro: '+(e.message||e),'er');}
+});
+
+// ── Constantes ───────────────────────────────────────────────────────────────
+document.getElementById('btnLoadConsts').addEventListener('click',async()=>{
+  const body=document.getElementById('constsBody');
+  body.innerHTML='<div style="text-align:center;padding:20px"><div class="sp dark" style="margin:auto"></div></div>';
+  try{
+    const[reg,axNode,cr,ar]=await Promise.all([
+      cA.ENS_REGISTRY(),cA.AXOLODAO_NODE(),
+      cA.CARETAKER_ROLE(),cA.AUDITOR_ROLE()
+    ]);
+    const expReg='0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e';
+    const expNode=ethers.namehash('axolodao2.eth');
+    const row=(k,v,ok,suffix='')=>'<div class="const-row"><span class="ck">'+k+'</span><span class="cv '+(ok?'ok':'er')+'">'+v+(suffix?(' '+suffix):'')+'</span></div>';
+    body.innerHTML=
+      row('ENS_REGISTRY',reg,reg.toLowerCase()===expReg.toLowerCase(),reg.toLowerCase()===expReg.toLowerCase()?'✓':'⚠ inesperado')+
+      row('AXOLODAO_NODE',axNode,axNode===expNode,axNode===expNode?'✓ (axolodao2.eth)':'✗')+
+      row('CARETAKER_ROLE',cr,true)+
+      row('AUDITOR_ROLE',ar,true);
+  }catch(e){body.innerHTML='<p style="color:var(--red);padding:12px">Erro: '+e.message+'</p>';}
+});
+
+// ── EAS info ─────────────────────────────────────────────────────────────────
+document.getElementById('btnLoadEAS').addEventListener('click',async()=>{
+  const body=document.getElementById('easBody');
+  body.innerHTML='<div style="text-align:center;padding:20px"><div class="sp dark" style="margin:auto"></div></div>';
+  try{
+    const easSchema = uid => '<a href="https://sepolia.easscan.org/schema/view/'+uid+'" target="_blank" style="color:var(--teal);font-family:var(--mono);font-size:10px">'+uid.slice(0,18)+'…</a>';
+    const[easAddr,tankS,axoS,trfS,deactS,measS]=await Promise.all([
+      cR.eas(),cR.tankSchemaUID(),cR.axolotlSchemaUID(),cR.transferSchemaUID(),cR.deactivateSchemaUID(),
+      cM.measurementSchemaUID()
+    ]);
+    const row=(k,v)=>'<div class="const-row"><span class="ck">'+k+'</span><span class="cv ok">'+v+'</span></div>';
+    const easLink='<a href="https://sepolia.etherscan.io/address/'+easAddr+'" target="_blank" style="color:var(--teal);font-family:var(--mono);font-size:11px">'+easAddr+'</a>';
+    body.innerHTML=
+      row('EAS Contract',easLink)+
+      row('Tank Schema',easSchema(tankS))+
+      row('Axolotl Schema',easSchema(axoS))+
+      row('Transfer Schema',easSchema(trfS))+
+      row('Deactivate Schema',easSchema(deactS))+
+      row('Measurement Schema',easSchema(measS));
+  }catch(e){body.innerHTML='<p style="color:var(--red);padding:12px">Erro: '+e.message+' — conecte a carteira primeiro.</p>';}
+});
+
+// ── Check Relayer detail ─────────────────────────────────────────────────────
+document.getElementById('btnCheckRelay').addEventListener('click',async()=>{
+  const body=document.getElementById('relayDetail');
+  body.innerHTML='<div style="text-align:center;padding:20px"><div class="sp dark" style="margin:auto"></div></div>';
+  try{
+    const res = await fetch(RELAYER_URL+'/health');
+    const d = await res.json();
+    const row=(k,v,ok=true)=>'<div class="const-row"><span class="ck">'+k+'</span><span class="cv '+(ok?'ok':'er')+'">'+v+'</span></div>';
+    body.innerHTML=
+      row('Status',d.status,d.status==='ok')+
+      row('Relayer Wallet',d.relayer)+
+      row('Saldo',d.balance,!d.balance.startsWith('0.00'))+
+      row('Rede',d.network+' ('+d.chainId+')',d.chainId===11155111)+
+      row('Access',d.contracts?.access||'—')+
+      row('Registry',d.contracts?.registry||'—')+
+      row('Monitoring',d.contracts?.monitoring||'—');
+  }catch(e){
+    body.innerHTML='<div style="padding:16px;color:var(--red);font-size:13px">Backend offline. Execute <code style="background:var(--surface2);padding:2px 6px;border-radius:4px">node server.js</code> na pasta axolodao-relayer.</div>';
+  }
+});
+
+// ── Tanques ──────────────────────────────────────────────────────────────────
+document.getElementById('btnRegTank').addEventListener('click',async()=>{
+  const n=document.getElementById('tName').value.trim();
+  const l=document.getElementById('tLoc').value.trim();
+  if(!n||!l){toast('Preencha nome e localização.','wn');return;}
+  const btn=document.getElementById('btnRegTank'); setBusy(btn,true);
+  try{
+    const txHash = await relayWrite(cR, 'registerTank', [n, l]);
+    toast('Tanque cadastrado! TX: '+txHash.slice(0,10)+'…');
+    document.getElementById('tName').value=''; document.getElementById('tLoc').value='';
+    await loadTanksCache(); await loadTanksTable();
+  }catch(e){toast('Erro: '+(e.reason||e.message||e),'er');}
+  finally{setBusy(btn,false,'Cadastrar Tanque');}
+});
+
+document.getElementById('btnLoadTanks').addEventListener('click',loadTanksTable);
+
+async function loadTanksTable(){
+  const tb=document.getElementById('tbTanks');
+  tb.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px"><div class="sp dark" style="margin:auto"></div></td></tr>';
+  try{
+    const n=await cR.nextTankId();
+    if(Number(n)<=1){tb.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-i">&#x1FAA3;</div><div>Nenhum tanque cadastrado</div></div></td></tr>';return;}
+    let rows='';
+    for(let i=1;i<Number(n);i++){
+      try{
+        const t=await cR.getTank(i);
+        const ax=await cR.getAxolotlsInTank(i);
+        rows+='<tr><td class="td-id">#'+t.id+'</td><td><strong>'+t.name+'</strong></td><td>'+t.location+'</td><td class="td-mono">'+short(t.registeredBy)+'</td><td>'+fmtTs(t.registeredAt)+'</td><td>'+(t.active?'<span class="badge b-active">Ativo</span>':'<span class="badge b-inactive">Inativo</span>')+'</td><td><strong style="color:var(--teal)">'+ax.length+'</strong></td><td>'+easAttest(t.attestationUID)+'</td></tr>';
+      }catch{}
+    }
+    tb.innerHTML=rows||'<tr><td colspan="8"><div class="empty"><div class="empty-i">&#x1FAA3;</div><div>Sem resultados</div></div></td></tr>';
+  }catch(e){tb.innerHTML='<tr><td colspan="8" style="color:var(--red);padding:14px">Erro: '+e.message+'</td></tr>';}
+}
+
+// ── Axolotes ─────────────────────────────────────────────────────────────────
+document.getElementById('btnRegAxo').addEventListener('click',async()=>{
+  const n=document.getElementById('aName').value.trim();
+  const sp=document.getElementById('aSpecies').value.trim();
+  const bd=document.getElementById('aBirth').value;
+  const ti=document.getElementById('aTankId').value;
+  const mo=document.getElementById('aMorph').value.trim();
+  const ph=document.getElementById('aPhoto').value.trim();
+  if(!n||!sp||!bd||!ti||!mo||!ph){toast('Preencha todos os campos.','wn');return;}
+  let photoHash; try{photoHash=ethers.zeroPadValue(ph,32);}catch{toast('Hash de foto inválido.','er');return;}
+  const birthTs=BigInt(Math.floor(new Date(bd).getTime()/1000));
+  const btn=document.getElementById('btnRegAxo'); setBusy(btn,true);
+  try{
+    const txHash = await relayWrite(cR, 'registerAxolotl', [n,sp,birthTs,BigInt(ti),mo,photoHash]);
+    toast('Axolote cadastrado! TX: '+txHash.slice(0,10)+'…');
+    ['aName','aSpecies','aBirth','aMorph','aPhoto'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('aTankId').value='';
+  }catch(e){toast('Erro: '+(e.reason||e.message||e),'er');}
+  finally{setBusy(btn,false,'Cadastrar Axolote');}
+});
+
+document.getElementById('btnSearchAxo').addEventListener('click',async()=>{
+  const id=document.getElementById('aSearchId').value;
+  if(!id){toast('Digite um ID.','wn');return;}
+  try{
+    const a=await cR.getAxolotl(BigInt(id));
+    document.getElementById('axoDetail').style.display='block';
+    document.getElementById('axoDetailGrid').innerHTML=
+      '<div class="di"><span class="dl">ID</span><span class="dv accent">#'+a.id+'</span></div>'+
+      '<div class="di"><span class="dl">Nome</span><span class="dv">'+a.name+'</span></div>'+
+      '<div class="di"><span class="dl">Espécie</span><span class="dv">'+a.species+'</span></div>'+
+      '<div class="di"><span class="dl">Tanque</span><span class="dv">#'+a.tankId+'</span></div>'+
+      '<div class="di"><span class="dl">Nascimento</span><span class="dv">'+fmtTs(a.birthDate)+'</span></div>'+
+      '<div class="di"><span class="dl">Status</span><span class="dv">'+(a.active?'<span class="badge b-active">Ativo</span>':'<span class="badge b-inactive">Inativo</span>')+'</span></div>'+
+      '<div class="di"><span class="dl">Morfologia</span><span class="dv">'+(a.morphData||'—')+'</span></div>'+
+      '<div class="di"><span class="dl">Registrado por</span><span class="dv mono">'+short(a.registeredBy)+'</span></div>'+
+      '<div class="di"><span class="dl">Cadastrado em</span><span class="dv">'+fmtTs(a.registeredAt)+'</span></div>'+
+      '<div class="di"><span class="dl">Hash Foto</span><span class="dv mono" style="font-size:10px">'+(a.photoHash===ethers.ZeroHash?'(vazio)':a.photoHash.slice(0,16)+'…')+'</span></div>'+
+      '<div class="di fc"><span class="dl">Atestação EAS</span><span class="dv">'+easAttest(a.attestationUID)+'</span></div>';
+  }catch(e){toast('Axolote não encontrado: '+(e.reason||e.message||e),'er');}
+});
+
+document.getElementById('btnLoadAxos').addEventListener('click',async()=>{
+  const tid=document.getElementById('axoTankFilter').value;
+  if(!tid){toast('Selecione um tanque.','wn');return;}
+  const tb=document.getElementById('tbAxos');
+  tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:20px"><div class="sp dark" style="margin:auto"></div></td></tr>';
+  try{
+    const ids=await cR.getAxolotlsInTank(BigInt(tid));
+    if(!ids.length){tb.innerHTML='<tr><td colspan="6"><div class="empty"><div class="empty-i">&#x1F98E;</div><div>Nenhum axolote neste tanque</div></div></td></tr>';return;}
+    let rows='';
+    for(const id of ids){
+      const a=await cR.getAxolotl(id);
+      rows+='<tr><td class="td-id">#'+a.id+'</td><td><strong>'+a.name+'</strong></td><td style="font-style:italic;color:var(--ink2)">'+a.species+'</td><td>'+fmtTs(a.birthDate)+'</td><td>'+(a.morphData||'—')+'</td><td>'+(a.active?'<span class="badge b-active">Ativo</span>':'<span class="badge b-inactive">Inativo</span>')+'</td></tr>';
+    }
+    tb.innerHTML=rows;
+  }catch(e){tb.innerHTML='<tr><td colspan="6" style="color:var(--red);padding:14px">Erro: '+e.message+'</td></tr>';}
+});
+
+// ── Medições ─────────────────────────────────────────────────────────────────
+document.getElementById('btnFillTest').addEventListener('click',()=>{
+  const vals={mTemp:1950,mPh:720,mO2:710,mCond:30000,mTurb:100,mPhos:50,mNo2:3,mNo3:1000,mNh3:2,mGh:800};
+  Object.entries(vals).forEach(([id,v])=>document.getElementById(id).value=v);
+});
+
+document.getElementById('btnRegMed').addEventListener('click',async()=>{
+  const tid=document.getElementById('mTankId').value;
+  if(!tid){toast('Selecione um tanque.','wn');return;}
+  const p={
+    tankId:      BigInt(tid),
+    temperature: parseInt(document.getElementById('mTemp').value)||0,
+    ph:          parseInt(document.getElementById('mPh').value)||0,
+    dissolvedOxygen:parseInt(document.getElementById('mO2').value)||0,
+    conductivity:parseInt(document.getElementById('mCond').value)||0,
+    turbidity:   parseInt(document.getElementById('mTurb').value)||0,
+    phosphates:  parseInt(document.getElementById('mPhos').value)||0,
+    no2:         parseInt(document.getElementById('mNo2').value)||0,
+    no3:         parseInt(document.getElementById('mNo3').value)||0,
+    ammonia:     parseInt(document.getElementById('mNh3').value)||0,
+    hardness:    parseInt(document.getElementById('mGh').value)||0,
+  };
+  const btn=document.getElementById('btnRegMed'); setBusy(btn,true);
+  try{
+    const txHash = await relayWrite(cM, 'recordMeasurement', [p]);
+    toast('Medição registrada! TX: '+txHash.slice(0,10)+'…');
+  }catch(e){toast('Erro: '+(e.reason||e.message||e),'er');}
+  finally{setBusy(btn,false,'Registrar Medição');}
+});
+
+document.getElementById('btnValidate').addEventListener('click',async()=>{
+  const id=document.getElementById('vMedId').value;
+  if(!id){toast('Digite o ID da medição.','wn');return;}
+  const btn=document.getElementById('btnValidate'); setBusy(btn,true);
+  try{
+    const txHash = await relayWrite(cM, 'validateMeasurement', [BigInt(id)]);
+    toast('Medição #'+id+' validada! TX: '+txHash.slice(0,10)+'…');
+  }catch(e){toast('Erro: '+(e.reason||e.message||e),'er');}
+  finally{setBusy(btn,false,'✓ Validar');}
+});
+
+document.getElementById('btnContest').addEventListener('click',async()=>{
+  const id=document.getElementById('vMedId').value;
+  const reason=document.getElementById('vReason').value.trim();
+  if(!id){toast('Digite o ID da medição.','wn');return;}
+  if(!reason){toast('Motivo é obrigatório para contestar.','wn');return;}
+  const btn=document.getElementById('btnContest'); setBusy(btn,true);
+  try{
+    const txHash = await relayWrite(cM, 'contestMeasurement', [BigInt(id), reason]);
+    toast('Medição #'+id+' contestada. TX: '+txHash.slice(0,10)+'…');
+  }catch(e){toast('Erro: '+(e.reason||e.message||e),'er');}
+  finally{setBusy(btn,false,'✗ Contestar');}
+});
+
+document.getElementById('btnLoadMed').addEventListener('click',async()=>{
+  const specificId=document.getElementById('mFilterId').value;
+  const tankFilter=document.getElementById('mFilterTank').value;
+  const tb=document.getElementById('tbMed');
+  tb.innerHTML='<tr><td colspan="10" style="text-align:center;padding:20px"><div class="sp dark" style="margin:auto"></div></td></tr>';
+  try{
+    const next=await cM.nextMeasurementId();
+    const total=Number(next);
+    if(total<=1){tb.innerHTML='<tr><td colspan="10"><div class="empty"><div class="empty-i">&#x1F4CA;</div><div>Nenhuma medição registrada</div></div></td></tr>';return;}
+    let ids=specificId?[Number(specificId)]:[];
+    if(!ids.length){const s=Math.max(1,total-20);for(let i=s;i<total;i++)ids.push(i);ids.reverse();}
+    let rows='';
+    for(const id of ids){
+      try{
+        const m=await cM.getMeasurement(id);
+        if(tankFilter&&Number(m.tankId)!==Number(tankFilter))continue;
+        rows+='<tr>'+
+          '<td class="td-id">#'+m.id+'</td>'+
+          '<td>#'+m.tankId+'</td>'+
+          '<td>'+fmtV(m.temperature)+'°C</td>'+
+          '<td>'+fmtV(m.ph)+'</td>'+
+          '<td>'+fmtV(m.dissolvedOxygen)+'</td>'+
+          '<td>'+fmtV(m.ammonia)+'</td>'+
+          '<td>'+statusBadge(m.status)+'</td>'+
+          '<td>'+fmtTs(m.timestamp)+'</td>'+
+          '<td class="td-mono">'+(m.validator&&m.validator!=='0x0000000000000000000000000000000000000000'?short(m.validator):'—')+'</td>'+
+          '<td>'+easAttest(m.attestationUID)+'</td>'+
+          '</tr>';
+      }catch{}
+    }
+    tb.innerHTML=rows||'<tr><td colspan="10"><div class="empty"><div class="empty-i">&#x1F4CA;</div><div>Nenhuma medição encontrada</div></div></td></tr>';
+  }catch(e){tb.innerHTML='<tr><td colspan="10" style="color:var(--red);padding:14px">Erro: '+e.message+'</td></tr>';}
+});
+
+document.getElementById('btnLoadTs').addEventListener('click',async()=>{
+  const tid=document.getElementById('tsFilterTank').value;
+  if(!tid){toast('Selecione um tanque.','wn');return;}
+  try{
+    const s=await cM.getTankStatus(BigInt(tid));
+    document.getElementById('tsResult').style.display='block';
+    document.getElementById('tsEmpty').style.display='none';
+    document.getElementById('tsLastPending').textContent   = Number(s.lastPendingId)===0?'(nenhum)':'#'+s.lastPendingId;
+    document.getElementById('tsLastValidated').textContent = Number(s.lastValidatedId)===0?'(nenhum)':'#'+s.lastValidatedId;
+    document.getElementById('tsTotal').textContent         = s.totalMeasurements.toString();
+  }catch(e){toast('Erro: '+(e.message||e),'er');}
+});
+
+// ── Instituições — previews ──────────────────────────────────────────────────
+function updInstPreview(){
+  const lb=document.getElementById('instLabel').value.trim().toLowerCase();
+  if(lb){
+    const node=ethers.namehash(lb+'.axolodao2.eth');
+    document.getElementById('instNodePreview').value=node;
+  }else{document.getElementById('instNodePreview').value='';}
+}
+function updInstDeactPreview(){
+  const lb=document.getElementById('instDeactLabel').value.trim().toLowerCase();
+  if(lb){
+    document.getElementById('instDeactNodePreview').value=ethers.namehash(lb+'.axolodao2.eth');
+  }else{document.getElementById('instDeactNodePreview').value='';}
+}
+document.getElementById('instLabel').addEventListener('input',updInstPreview);
+document.getElementById('instDeactLabel').addEventListener('input',updInstDeactPreview);
+
+// ── Adicionar Instituição (chamada direta — admin tem ETH) ──────────────────
+document.getElementById('btnAddInst').addEventListener('click',async()=>{
+  const lb=document.getElementById('instLabel').value.trim().toLowerCase();
+  const roleVal=document.getElementById('instRole').value;
+  const gerente=document.getElementById('instGerente').value.trim();
+  if(!lb||!roleVal){toast('Preencha label e role.','wn');return;}
+  if(!gerente||!gerente.startsWith('0x')){toast('Preencha o endereço do gerente.','wn');return;}
+  const btn=document.getElementById('btnAddInst');
+  setBusy(btn,true);
+  logLine('logInst','Preparando adicionarInstituicao("'+lb+'", '+roleVal+', '+short(gerente)+')','if');
+  try{
+    const roleHash = roleVal==='caretaker' ? await cA.CARETAKER_ROLE() : await cA.AUDITOR_ROLE();
+    logLine('logInst','Enviando tx direta via MetaMask (admin)…','wn');
+    const tx = await cA.adicionarInstituicao(lb, roleHash, gerente);
+    logLine('logInst','Tx enviada: '+tx.hash,'if');
+    const receipt = await tx.wait();
+    logLine('logInst','✓ Confirmada no bloco '+receipt.blockNumber+'. Instituição "'+lb+'" adicionada + subdomínio ENS criado — gerente: '+short(gerente),'ok');
+    toast('Instituição adicionada!','ok');
+  }catch(e){
+    logLine('logInst','✗ Erro: '+(e.reason||e.message||e),'er');
+    toast('Erro: '+(e.reason||e.message||e),'er');
+  }finally{setBusy(btn,false,'Adicionar Instituição');}
+});
+
+// ── Desativar Instituição (chamada direta — admin tem ETH) ──────────────────
+document.getElementById('btnDeactInst').addEventListener('click',async()=>{
+  const lb=document.getElementById('instDeactLabel').value.trim().toLowerCase();
+  if(!lb){toast('Preencha a label da instituição.','wn');return;}
+  const parentNode=ethers.namehash(lb+'.axolodao2.eth');
+  const btn=document.getElementById('btnDeactInst');
+  setBusy(btn,true);
+  try{
+    const tx = await cA.removerInstituicao(parentNode);
+    toast('Tx enviada: '+tx.hash,'ok');
+    const receipt = await tx.wait();
+    toast('Instituição "'+lb+'" desativada no bloco '+receipt.blockNumber,'ok');
+  }catch(e){
+    toast('Erro: '+(e.reason||e.message||e),'er');
+  }finally{setBusy(btn,false,'Desativar Instituição');}
+});
+
+// ── Consultar Instituição ───────────────────────────────────────────────────
+document.getElementById('btnQueryInst').addEventListener('click',async()=>{
+  const lb=document.getElementById('instQueryLabel').value.trim().toLowerCase();
+  if(!lb){toast('Preencha a label.','wn');return;}
+  const parentNode=ethers.namehash(lb+'.axolodao2.eth');
+  try{
+    const[role,label,ativa,gerente]=await cA.instituicoes(parentNode);
+    document.getElementById('instQueryResult').style.display='block';
+    const yesNo=b=>b?'<span style="color:var(--teal);font-weight:600">Sim ✓</span>':'<span style="color:var(--red);font-weight:600">Não ✗</span>';
+    const roleName = async (r) => {
+      const cr=await cA.CARETAKER_ROLE(); const ar=await cA.AUDITOR_ROLE();
+      if(r===cr) return 'CARETAKER_ROLE';
+      if(r===ar) return 'AUDITOR_ROLE';
+      return r===ethers.ZeroHash?'(nenhum)':r.slice(0,10)+'…';
+    };
+    const rn=await roleName(role);
+    document.getElementById('instQueryGrid').innerHTML=
+      '<div class="di"><span class="dl">Label</span><span class="dv">'+(label||'(vazio)')+'</span></div>'+
+      '<div class="di"><span class="dl">Role</span><span class="dv">'+rn+'</span></div>'+
+      '<div class="di"><span class="dl">Ativa</span><span class="dv">'+yesNo(ativa)+'</span></div>'+
+      '<div class="di"><span class="dl">Gerente</span><span class="dv mono">'+(gerente&&gerente!==ethers.ZeroAddress?'<span title="'+gerente+'">'+short(gerente)+'</span>':'(não definido)')+'</span></div>'+
+      '<div class="di"><span class="dl">parentNode</span><span class="dv" style="font-family:var(--mono);font-size:10px">'+parentNode+'</span></div>';
+  }catch(e){toast('Erro: '+(e.reason||e.message||e),'er');}
+});
+
+// ── Registrar Membros — ABIs ENS ─────────────────────────────────────────────
+const ABI_ENS_REGISTRY = [
+  {"inputs":[{"name":"node","type":"bytes32"},{"name":"label","type":"bytes32"},{"name":"owner","type":"address"}],"name":"setSubnodeOwner","outputs":[{"name":"","type":"bytes32"}],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[{"name":"node","type":"bytes32"},{"name":"resolver","type":"address"}],"name":"setResolver","outputs":[],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[{"name":"node","type":"bytes32"}],"name":"owner","outputs":[{"name":"","type":"address"}],"stateMutability":"view","type":"function"}
+];
+const ABI_ENS_RESOLVER = [
+  {"inputs":[{"name":"node","type":"bytes32"},{"name":"a","type":"address"}],"name":"setAddr","outputs":[],"stateMutability":"nonpayable","type":"function"}
+];
+const ENS_REGISTRY_ADDR = '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e';
+
+// ── Registrar Membros — previews ──────────────────────────────────────────────
+function updUserPreview(){
+  const inst=document.getElementById('userInstLabel').value.trim().toLowerCase();
+  const user=document.getElementById('userLabel').value.trim().toLowerCase();
+  const parentNode=inst?ethers.namehash(inst+'.axolodao2.eth'):'';
+  const userNode=(inst&&user)?ethers.namehash(user+'.'+inst+'.axolodao2.eth'):'';
+  document.getElementById('userEnsPreview').value=(inst&&user)?(user+'.'+inst+'.axolodao2.eth'):'';
+  document.getElementById('userParentNode').value=parentNode;
+  document.getElementById('userNode').value=userNode;
+}
+document.getElementById('userInstLabel').addEventListener('input',updUserPreview);
+document.getElementById('userLabel').addEventListener('input',updUserPreview);
+
+// ── Registrar Membros — handler ───────────────────────────────────────────────
+document.getElementById('btnRegUser').addEventListener('click',async()=>{
+  const instLb=document.getElementById('userInstLabel').value.trim().toLowerCase();
+  const userLb=document.getElementById('userLabel').value.trim().toLowerCase();
+  const userAddr=document.getElementById('userAddress').value.trim();
+  const resolverAddr=document.getElementById('userResolverAddr').value.trim();
+
+  if(!instLb||!userLb){toast('Preencha label da instituição e do membro.','wn');return;}
+  if(!userAddr||!userAddr.startsWith('0x')){toast('Preencha a carteira do membro.','wn');return;}
+  if(!resolverAddr||!resolverAddr.startsWith('0x')){toast('Preencha o endereço do resolver.','wn');return;}
+
+  const parentNode=ethers.namehash(instLb+'.axolodao2.eth');
+  const userLabelHash=ethers.keccak256(ethers.toUtf8Bytes(userLb));
+  const userNodeHash=ethers.namehash(userLb+'.'+instLb+'.axolodao2.eth');
+  const ensName=userLb+'.'+instLb+'.axolodao2.eth';
+
+  const btn=document.getElementById('btnRegUser');
+  setBusy(btn,true);
+  logLine('logRegUser','Iniciando registro de "'+ensName+'" para '+short(userAddr),'if');
+
+  try{
+    const signerObj=await provider.getSigner();
+    const ensReg=new ethers.Contract(ENS_REGISTRY_ADDR,ABI_ENS_REGISTRY,signerObj);
+    const resolver=new ethers.Contract(resolverAddr,ABI_ENS_RESOLVER,signerObj);
+    const gerenteAddr=await signerObj.getAddress();
+
+    // 1. Cria subdomínio com gerente como dono temporário
+    logLine('logRegUser','[1/4] setSubnodeOwner → gerente como dono temporário…','wn');
+    const tx1=await ensReg.setSubnodeOwner(parentNode,userLabelHash,gerenteAddr);
+    logLine('logRegUser','Tx: '+tx1.hash,'if');
+    await tx1.wait();
+    logLine('logRegUser','✓ Subdomínio criado','ok');
+
+    // 2. Configura o resolver
+    logLine('logRegUser','[2/4] setResolver('+short(resolverAddr)+')…','wn');
+    const tx2=await ensReg.setResolver(userNodeHash,resolverAddr);
+    logLine('logRegUser','Tx: '+tx2.hash,'if');
+    await tx2.wait();
+    logLine('logRegUser','✓ Resolver configurado','ok');
+
+    // 3. Associa o endereço do membro no resolver
+    logLine('logRegUser','[3/4] resolver.setAddr('+short(userAddr)+')…','wn');
+    const tx3=await resolver.setAddr(userNodeHash,userAddr);
+    logLine('logRegUser','Tx: '+tx3.hash,'if');
+    await tx3.wait();
+    logLine('logRegUser','✓ Endereço associado ao ENS','ok');
+
+    // 4. Transfere ownership ao membro
+    logLine('logRegUser','[4/4] setSubnodeOwner → transferindo ownership ao membro…','wn');
+    const tx4=await ensReg.setSubnodeOwner(parentNode,userLabelHash,userAddr);
+    logLine('logRegUser','Tx: '+tx4.hash,'if');
+    await tx4.wait();
+    logLine('logRegUser','✓ Ownership transferida para '+short(userAddr),'ok');
+
+    logLine('logRegUser','✓✓ Membro "'+ensName+'" registrado com sucesso! O membro já pode chamar registrarAcesso.','ok');
+    toast('Membro registrado no ENS!','ok');
+  }catch(e){
+    logLine('logRegUser','✗ Erro: '+(e.reason||e.message||e),'er');
+    toast('Erro: '+(e.reason||e.message||e),'er');
+  }finally{setBusy(btn,false,'Registrar Membro');}
+});
+
+// ── Navigation ───────────────────────────────────────────────────────────────
+const pages={
+  acesso:       {t:'Acesso ENS',       s:'Registro e verificação de roles via ENS'},
+  instituicoes: {t:'Instituições',     s:'Gerenciar instituições reconhecidas (admin)'},
+  usuarios:     {t:'Registrar Membros',s:'Gerente institucional cria subdomínios ENS para membros da instituição'},
+  constantes:   {t:'Verificar Contrato',s:'Constantes, endereços e status do relayer'},
+  tanques:      {t:'Tanques',          s:'Gerenciar tanques no AxoloRegistry'},
+  axolotes:     {t:'Axolotes',         s:'Cadastrar e consultar axolotes'},
+  medicoes:     {t:'Medições',         s:'Registrar, validar e consultar medições ambientais'},
+};
+document.querySelectorAll('.nav-item').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const p=btn.dataset.page;
+    document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.content').forEach(c=>c.classList.remove('active'));
+    document.getElementById('page-'+p).classList.add('active');
+    document.getElementById('pgTitle').textContent=pages[p].t;
+    document.getElementById('pgSub').textContent=pages[p].s;
+  });
+});
+
+document.getElementById('btnConnect').addEventListener('click',connect);
+</script>
+</body>
+</html>

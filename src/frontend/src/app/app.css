@@ -1,0 +1,240 @@
+:host {
+	display: block;
+	height: 100%;
+}
+
+.app-shell {
+	display: flex;
+	width: 100%;
+	height: 100vh;
+	height: 100dvh;
+	background: #f4f7f8;
+	overflow: hidden;
+}
+
+/* Conteúdo principal: ocupa o espaço restante ao lado da sidebar */
+.app-content {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	overflow-x: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
+.app-content.with-sidebar {
+	padding: 0;
+	box-sizing: border-box;
+	font-size: 0.95rem;
+}
+
+.global-top-header {
+	background-color: white;
+	height: 4rem;
+	padding: 0 1rem;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	border-bottom: 1px solid #e5e7eb;
+	position: sticky;
+	top: 0;
+	z-index: 20;
+	flex-shrink: 0;
+}
+
+.global-search-wrapper {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	width: 100%;
+	max-width: 42rem;
+	background-color: #f4f7f8;
+	border-radius: 9999px;
+	padding: 0.62rem 0.85rem;
+}
+
+.global-search-icon {
+	color: #9ca3af;
+	flex-shrink: 0;
+}
+
+.global-search-button {
+	background: transparent;
+	border: none;
+	padding: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+}
+
+.global-search-input {
+	flex: 1;
+	background-color: transparent;
+	border: none;
+	outline: none;
+	color: #374151;
+}
+
+.global-search-input::placeholder {
+	color: #9ca3af;
+}
+
+.global-header-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.95rem;
+	color: #4b5563;
+}
+
+.global-action-btn {
+	background: transparent;
+	border: none;
+	cursor: pointer;
+	color: inherit;
+	transition: color 0.2s;
+	padding: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.global-action-btn:hover {
+	color: #329F9A;
+}
+
+.app-route-content {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	overflow-x: hidden;
+	padding: 0.8rem;
+	box-sizing: border-box;
+}
+
+.app-route-content.no-shell {
+	padding: 0;
+	overflow: hidden;
+}
+
+.notification-time {
+	margin: 0.25rem 0 0;
+	font-size: 0.7rem;
+	color: #8fa0a8;
+}
+
+.toast-stack {
+	position: fixed;
+	top: 82px;
+	right: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 0.55rem;
+	z-index: 1200;
+	width: min(390px, calc(100vw - 24px));
+}
+
+.toast-item {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 0.6rem;
+	background: #ffffff;
+	border: 1px solid #e5ecef;
+	border-left: 4px solid transparent;
+	border-radius: 12px;
+	padding: 0.65rem 0.65rem 0.65rem 0.75rem;
+	box-shadow: 0 12px 24px rgba(20, 64, 77, 0.15);
+}
+
+.toast-item-red {
+	border-left-color: #ef4444;
+}
+
+.toast-item-yellow {
+	border-left-color: #f59e0b;
+}
+
+.toast-item-green {
+	border-left-color: #22c55e;
+}
+
+.toast-content {
+	min-width: 0;
+}
+
+.toast-title {
+	margin: 0 0 0.15rem;
+	font-size: 0.82rem;
+	font-weight: 700;
+	color: #224d59;
+}
+
+.toast-text {
+	margin: 0;
+	font-size: 0.76rem;
+	color: #5f7480;
+	line-height: 1.35;
+}
+
+.toast-time {
+	margin: 0.22rem 0 0;
+	font-size: 0.69rem;
+	color: #8fa0a8;
+}
+
+.toast-close {
+	background: transparent;
+	border: none;
+	color: #8fa0a8;
+	cursor: pointer;
+	font-size: 1rem;
+	line-height: 1;
+	padding: 0.08rem;
+	flex-shrink: 0;
+}
+
+.toast-close:hover {
+	color: #4b5563;
+}
+
+@media (max-width: 768px) {
+	.app-shell {
+		flex-direction: column;
+	}
+
+	.app-content.with-sidebar {
+		padding: 0;
+		font-size: 0.93rem;
+	}
+
+	.global-top-header {
+		height: auto;
+		min-height: 4rem;
+		padding: 0.65rem 0.9rem;
+		gap: 0.7rem;
+		flex-wrap: wrap;
+	}
+
+	.global-search-wrapper {
+		order: 2;
+		width: 100%;
+		max-width: 100%;
+	}
+
+	.global-header-actions {
+		order: 1;
+		width: 100%;
+		justify-content: flex-end;
+		gap: 0.9rem;
+	}
+
+	.app-route-content {
+		padding: 0.55rem;
+	}
+
+	.toast-stack {
+		top: 74px;
+		right: 10px;
+	}
+}

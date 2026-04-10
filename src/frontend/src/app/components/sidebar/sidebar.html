@@ -1,0 +1,112 @@
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo-container">
+      <div class="brand-mark">
+        <span class="brand-icon-wrap">
+          <img src="/assets/nova-logo-icon.png" alt="AmbyData Icon" class="brand-logo-icon" referrerpolicy="no-referrer" />
+        </span>
+        <span class="brand-text">Amby<span class="brand-text-light">Data</span></span>
+      </div>
+      <div class="panel-context">
+        <lucide-icon [img]="LayoutDashboardIcon" size="16"></lucide-icon>
+        <span>{{ tituloPainel }}</span>
+      </div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <!-- Link comum a todos: Dashboard/Tela Inicial -->
+    <a href="#" (click)="selecionarMenu('home', $event)" [class.active]="menuAtivo === 'home'" class="nav-item">
+      <lucide-icon [img]="LayoutDashboardIcon" size="20"></lucide-icon>
+      <span>Home</span>
+    </a>
+
+    <!-- Links do Admin -->
+    @if (cargoUsuario === 'admin') {
+      <a href="#" (click)="selecionarMenu('tanques', $event)" [class.active]="menuAtivo === 'tanques'" class="nav-item">
+        <lucide-icon [img]="WavesIcon" size="20"></lucide-icon>
+        <span>Tanques</span>
+      </a>
+      <a href="#" (click)="selecionarMenu('axolotes', $event)" [class.active]="menuAtivo === 'axolotes'" class="nav-item">
+        <lucide-icon [img]="MicroscopeIcon" size="20"></lucide-icon>
+        <span>Axolotes</span>
+      </a>
+      <a href="#" (click)="selecionarMenu('monitoramento', $event)" [class.active]="menuAtivo === 'monitoramento'" class="nav-item">
+        <lucide-icon [img]="ClipboardEditIcon" size="20"></lucide-icon>
+        <span>Medições</span>
+      </a>
+      <a href="#" (click)="selecionarMenu('cadastro-tanque', $event)" [class.active]="menuAtivo === 'cadastro-tanque'" class="nav-item">
+        <lucide-icon [img]="DropletIcon" size="20"></lucide-icon>
+        <span>Cadastro tanque</span>
+      </a>
+      <a href="#" (click)="selecionarMenu('cadastro-axolote', $event)" [class.active]="menuAtivo === 'cadastro-axolote'" class="nav-item">
+        <lucide-icon [img]="PlusCircleIcon" size="20"></lucide-icon>
+        <span>Cadastro axolote</span>
+      </a>
+      <a href="#" (click)="selecionarMenu('diagnostico', $event)" [class.active]="menuAtivo === 'diagnostico'" class="nav-item">
+        <lucide-icon [img]="ActivityIcon" size="20"></lucide-icon>
+        <span>Diagnóstico</span>
+      </a>
+    }
+
+    <!-- Links do Gerente -->
+    @if (cargoUsuario === 'gerente') {
+      <a href="#" (click)="selecionarMenu('registro-membro', $event)" [class.active]="menuAtivo === 'registro-membro'" class="nav-item">
+        <lucide-icon [img]="UserPlusIcon" size="20"></lucide-icon>
+        <span>Registrar Membros</span>
+      </a>
+      <a href="#" (click)="selecionarMenu('tanques', $event)" [class.active]="menuAtivo === 'tanques'" class="nav-item">
+        <lucide-icon [img]="WavesIcon" size="20"></lucide-icon>
+        <span>Tanques</span>
+      </a>
+      <a href="#" (click)="selecionarMenu('axolotes', $event)" [class.active]="menuAtivo === 'axolotes'" class="nav-item">
+        <lucide-icon [img]="MicroscopeIcon" size="20"></lucide-icon>
+        <span>Axolotes</span>
+      </a>
+      <a href="#" (click)="selecionarMenu('monitoramento', $event)" [class.active]="menuAtivo === 'monitoramento'" class="nav-item">
+        <lucide-icon [img]="ClipboardEditIcon" size="20"></lucide-icon>
+        <span>Medições</span>
+      </a>
+    }
+
+    <!-- Links de Visualização (cuidador/auditor/outros) -->
+    @if (cargoUsuario !== 'admin' && cargoUsuario !== 'gerente') {
+      <a href="#" (click)="selecionarMenu('tanques', $event)" [class.active]="menuAtivo === 'tanques'" class="nav-item">
+        <lucide-icon [img]="WavesIcon" size="20"></lucide-icon>
+        <span>Tanques</span>
+      </a>
+      <a href="#" (click)="selecionarMenu('axolotes', $event)" [class.active]="menuAtivo === 'axolotes'" class="nav-item">
+        <lucide-icon [img]="MicroscopeIcon" size="20"></lucide-icon>
+        <span>Axolotes</span>
+      </a>
+    }
+
+    <!-- Links do Cuidador -->
+    @if (cargoUsuario === 'operador') {
+      <a href="#" (click)="selecionarMenu('cadastro-tanque', $event)" [class.active]="menuAtivo === 'cadastro-tanque'" class="nav-item">
+        <lucide-icon [img]="DropletIcon" size="20"></lucide-icon>
+        <span>Cadastro tanque</span>
+      </a>
+      <a href="#" (click)="selecionarMenu('cadastro-axolote', $event)" [class.active]="menuAtivo === 'cadastro-axolote'" class="nav-item">
+        <lucide-icon [img]="PlusCircleIcon" size="20"></lucide-icon>
+        <span>Cadastro axolote</span>
+      </a>
+      <a href="#" (click)="selecionarMenu('monitoramento', $event)" [class.active]="menuAtivo === 'monitoramento'" class="nav-item">
+        <lucide-icon [img]="ClipboardEditIcon" size="20"></lucide-icon>
+        <span>Monitoramento</span>
+      </a>
+    }
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="account-actions">
+      <div class="wallet-badge">
+        <span class="wallet-address">{{ carteiraEncurtada }}</span>
+      </div>
+      <button class="logout-btn" (click)="desconectar()">
+        <lucide-icon [img]="LogOutIcon" size="20"></lucide-icon>
+        <span>Sair</span>
+      </button>
+    </div>
+  </div>
+</div>

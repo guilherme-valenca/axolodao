@@ -1,0 +1,173 @@
+<div class="page-background">
+  <div class="login-card">
+
+    <div class="login-form-side">
+
+      <div class="logo-container">
+        <div class="brand-mark">
+          <span class="brand-icon-wrap">
+            <img src="/assets/nova-logo-icon.png" alt="AmbyData Icon" class="brand-logo-icon" referrerpolicy="no-referrer" />
+          </span>
+          <span class="brand-wordmark">Amby<span class="brand-wordmark-light">Data</span></span>
+        </div>
+      </div>
+
+      <h1 class="login-title">Acesso ao AmbyData</h1>
+
+      <!-- ── STEP: connect ──────────────────────────────────────────────── -->
+      @if (step === 'connect') {
+        <h3 class="login-sub-title">Conecte sua carteira para acessar a plataforma</h3>
+        <div class="wallet-form-container">
+          <button type="button" class="sign-up-button flex items-center justify-center gap-2"
+            (click)="conectarCarteira()" [disabled]="isLoading">
+            @if (isLoading) {
+              <lucide-icon [img]="LoaderIcon" class="animate-spin" size="20"></lucide-icon>
+            } @else {
+              <lucide-icon [img]="WalletIcon" size="20"></lucide-icon>
+            }
+            Conectar Carteira
+          </button>
+        </div>
+      }
+
+      <!-- ── STEP: detecting ────────────────────────────────────────────── -->
+      @if (step === 'detecting') {
+        <div class="wallet-form-container">
+          <div class="detecting-spinner">
+            <lucide-icon [img]="LoaderIcon" class="animate-spin" size="40"></lucide-icon>
+            <p>Verificando permissões...</p>
+          </div>
+        </div>
+      }
+
+      <!-- ── STEP: selectRole ───────────────────────────────────────────── -->
+      @if (step === 'selectRole') {
+        <div class="wallet-form-container">
+          <div class="wallet-profile-card">
+            <div class="wallet-avatar">
+              <lucide-icon [img]="WalletIcon" size="20" color="#009C9C"></lucide-icon>
+            </div>
+            <div class="wallet-info">
+              <span class="wallet-label">Carteira Conectada</span>
+              <span class="wallet-address">{{ walletAddress | slice:0:6 }}...{{ walletAddress | slice:-4 }}</span>
+            </div>
+            <button type="button" class="switch-wallet-btn" (click)="trocarCarteira()" [disabled]="isLoading" title="Trocar Carteira">
+              <lucide-icon [img]="RefreshCwIcon" size="18"></lucide-icon>
+            </button>
+          </div>
+
+          <p class="role-select-label">Selecione seu perfil de acesso:</p>
+
+          <div class="role-cards">
+            @if (auth.isAdmin) {
+              <button class="role-card role-admin" (click)="selecionarPerfil('admin')">
+                <lucide-icon [img]="ShieldIcon" size="28"></lucide-icon>
+                <span class="role-card-title">Administrador</span>
+                @if (auth.ensName) {
+                  <span class="role-card-ens">{{ auth.ensName }}</span>
+                }
+              </button>
+            }
+            @if (auth.isGerente) {
+              <button class="role-card role-gerente" (click)="selecionarPerfil('gerente')">
+                <lucide-icon [img]="UserIcon" size="28"></lucide-icon>
+                <span class="role-card-title">Gerente Institucional</span>
+                @if (auth.ensName) {
+                  <span class="role-card-ens">{{ auth.ensName }}</span>
+                }
+              </button>
+            }
+            @if (auth.isCaretaker || auth.isAuditor) {
+              <button class="role-card role-operador" (click)="selecionarPerfil(auth.isCaretaker ? 'caretaker' : 'auditor')">
+                <lucide-icon [img]="EyeIcon" size="28"></lucide-icon>
+                <span class="role-card-title">{{ auth.isCaretaker ? 'Cuidador' : 'Auditor' }}</span>
+                @if (auth.ensName) {
+                  <span class="role-card-ens">{{ auth.ensName }}</span>
+                }
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- ── STEP: register ────────────────────────────────────────────── -->
+      @if (step === 'register') {
+        <div class="wallet-form-container">
+          <div class="wallet-profile-card">
+            <div class="wallet-avatar">
+              <lucide-icon [img]="WalletIcon" size="20" color="#009C9C"></lucide-icon>
+            </div>
+            <div class="wallet-info">
+              <span class="wallet-label">Carteira Conectada</span>
+              <span class="wallet-address">{{ walletAddress | slice:0:6 }}...{{ walletAddress | slice:-4 }}</span>
+            </div>
+            <button type="button" class="switch-wallet-btn" (click)="trocarCarteira()" [disabled]="isLoading" title="Trocar Carteira">
+              <lucide-icon [img]="RefreshCwIcon" size="18"></lucide-icon>
+            </button>
+          </div>
+
+          <form [formGroup]="registerForm" class="wallet-inputs fade-in">
+
+            <div class="input-group">
+              <label for="ensLabel">Identificação (Label ENS)</label>
+              <input type="text" id="ensLabel" formControlName="ensLabel"
+                placeholder="Ex: ana, joao, lab01" class="wallet-input">
+              <span class="input-hint">Seu nome ou identificador único (sem espaços)</span>
+            </div>
+
+            <div class="input-group">
+              <label for="ensInst">Instituição</label>
+              <input type="text" id="ensInst" formControlName="ensInst"
+                placeholder="Ex: biomuseu, unam, labtest" class="wallet-input">
+              <span class="input-hint">Nome da sua instituição (sem espaços)</span>
+            </div>
+
+            @if (nomeEnsCompleto) {
+              <div class="input-group">
+                <span class="label-text">Identidade Digital Completa (ENS)</span>
+                <div class="wallet-input ens-preview">{{ nomeEnsCompleto }}</div>
+              </div>
+            }
+
+            <div class="relayer-status" [class.online]="relayer.online" [class.offline]="!relayer.online">
+              <span class="relayer-dot"></span>
+              {{ relayer.online ? 'Relayer online — transação gasless' : 'Relayer offline — inicie: node server.js' }}
+            </div>
+
+            <button type="button"
+              class="sign-up-button confirm-btn flex items-center justify-center gap-2"
+              (click)="registrarAcesso()" [disabled]="isLoading || !relayer.online">
+              @if (isLoading) {
+                <lucide-icon [img]="LoaderIcon" class="animate-spin" size="20"></lucide-icon>
+              } @else {
+                <lucide-icon [img]="CheckCircleIcon" size="20"></lucide-icon>
+              }
+              Registrar Acesso
+            </button>
+
+          </form>
+        </div>
+      }
+
+      <!-- ── Feedback ──────────────────────────────────────────────────── -->
+      @if (logMensagem) {
+        <div class="feedback-message"
+          [ngClass]="{'error': isError, 'success': isSuccess, 'loading': isLoading && !isError && !isSuccess}">
+          @if (isError)   { <lucide-icon [img]="AlertTriangleIcon" size="18"></lucide-icon> }
+          @if (isSuccess) { <lucide-icon [img]="CheckCircleIcon"   size="18"></lucide-icon> }
+          @if (isLoading && !isError && !isSuccess) {
+            <lucide-icon [img]="LoaderIcon" class="animate-spin" size="18"></lucide-icon>
+          }
+          <span>{{ logMensagem }}</span>
+        </div>
+      }
+
+    </div>
+
+    <div class="login-brand-side">
+      <img src="/assets/axolotes-loginPage.png" alt="Axolotes em ambiente aquático"
+        class="brand-image-full" referrerpolicy="no-referrer" />
+    </div>
+
+  </div>
+</div>

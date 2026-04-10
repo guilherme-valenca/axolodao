@@ -1,0 +1,31 @@
+﻿<div class="cadastro-container fade-in">
+  <div class="header-tag">
+    <span class="btn-novo">
+      <lucide-icon name="plus" [size]="15"></lucide-icon>
+      Novo Tanque
+    </span>
+  </div>
+
+  <div class="form-body">
+    <div class="input-group">
+      <label>Nome / Identificação</label>
+      <input type="text" placeholder="Ex: Tanque Berçário" [(ngModel)]="nomeTanque" class="input-field">
+    </div>
+
+    <div class="input-group">
+      <label>Localização (Setor / Sala)</label>
+      <input type="text" placeholder="Ex: Laboratório Norte" [(ngModel)]="localizacao" class="input-field">
+    </div>
+
+    <div class="input-group">
+      <label>Responsável Pelo Cadastro</label>
+      <input type="text" [value]="enderecoResponsavel" disabled class="input-field disabled-input">
+    </div>
+
+    <div class="action-row" style="margin-top: 30px;">
+      <button class="btn-adicionar" (click)="cadastrarTanque()" [disabled]="enviandoTx">
+        {{ enviandoTx ? 'Processando...' : 'Adicionar Tanque' }}
+      </button>
+    </div>
+  </div>
+</div>

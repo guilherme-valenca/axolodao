@@ -1,0 +1,130 @@
+.cadastro-container {
+  width: min(600px, 100%);
+  margin: 14px auto;
+  background-color: #ffffff;
+  border-radius: 20px;
+  padding: 22px 26px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+}
+
+.header-tag {
+  margin-bottom: 18px;
+}
+
+.btn-novo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #329f9a;
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.form-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.input-group label {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #14404d;
+}
+
+.input-field {
+  background-color: #f8f9fa;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  color: #2c3e50;
+  outline: none;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.input-field:focus {
+  border-color: #329f9a;
+  box-shadow: 0 0 0 3px rgba(50, 159, 154, 0.12);
+}
+
+.input-select {
+  cursor: pointer;
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #7f8c8d 50%),
+    linear-gradient(135deg, #7f8c8d 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 3px),
+    calc(100% - 12px) calc(50% - 3px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 2.1rem;
+}
+
+.input-mono {
+  font-family: monospace;
+  font-size: 0.85rem;
+}
+
+.input-hint {
+  font-size: 0.78rem;
+  color: #95a5a6;
+}
+
+.disabled-input {
+  color: #8fa0ab;
+  cursor: not-allowed;
+}
+
+.action-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.btn-adicionar {
+  background-color: #329f9a;
+  color: #ffffff;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 28px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.btn-adicionar:hover {
+  background-color: #28807c;
+  transform: translateY(-1px);
+}
+
+.btn-adicionar:disabled {
+  background-color: #a0d1cf;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@media (max-width: 640px) {
+  .cadastro-container {
+    width: calc(100% - 12px);
+    margin: 10px auto;
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .btn-adicionar {
+    width: 100%;
+    padding: 11px 18px;
+  }
+}
