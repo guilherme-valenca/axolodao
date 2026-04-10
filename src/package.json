@@ -1,0 +1,11 @@
+{
+  "name": "axolodao-relayer-root",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "cd axolodao-relayer && npm install",
+    "start": "cd axolodao-relayer && node server.js"
+  }
+}
