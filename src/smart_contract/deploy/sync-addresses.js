@@ -144,26 +144,33 @@ if (eas) {
 fs.writeFileSync(FRONTEND_HTML, html, "utf8");
 console.log("Updated smart_contract/test/axolodao.html");
 
-// ── Update frontend/src/environments/environment.ts ──────────────────────────
+// ── Update frontend/src/environments/environment.ts & environment.prod.ts ────
 
 const FRONTEND_ENV = path.resolve(
   __dirname,
   "../../frontend/src/environments/environment.ts"
 );
 
-if (fs.existsSync(FRONTEND_ENV)) {
-  let envTs = fs.readFileSync(FRONTEND_ENV, "utf8");
-  envTs = envTs
-    .replace(/(access\s*:\s*)'0x[0-9a-fA-F]+'/, `$1'${access}'`)
-    .replace(/(registry\s*:\s*)'0x[0-9a-fA-F]+'/, `$1'${registry}'`)
-    .replace(/(monitoring\s*:\s*)'0x[0-9a-fA-F]+'/, `$1'${monitoring}'`);
-  if (eas) {
-    envTs = envTs.replace(/(eas\s*:\s*)'0x[0-9a-fA-F]+'/, `$1'${eas}'`);
+const FRONTEND_ENV_PROD = path.resolve(
+  __dirname,
+  "../../frontend/src/environments/environment.prod.ts"
+);
+
+for (const envFile of [FRONTEND_ENV, FRONTEND_ENV_PROD]) {
+  if (fs.existsSync(envFile)) {
+    let envTs = fs.readFileSync(envFile, "utf8");
+    envTs = envTs
+      .replace(/(access\s*:\s*)'0x[0-9a-fA-F]+'/, `$1'${access}'`)
+      .replace(/(registry\s*:\s*)'0x[0-9a-fA-F]+'/, `$1'${registry}'`)
+      .replace(/(monitoring\s*:\s*)'0x[0-9a-fA-F]+'/, `$1'${monitoring}'`);
+    if (eas) {
+      envTs = envTs.replace(/(eas\s*:\s*)'0x[0-9a-fA-F]+'/, `$1'${eas}'`);
+    }
+    fs.writeFileSync(envFile, envTs, "utf8");
+    console.log("Updated " + path.basename(envFile));
+  } else {
+    console.warn("WARNING: " + path.basename(envFile) + " not found — skipping.");
   }
-  fs.writeFileSync(FRONTEND_ENV, envTs, "utf8");
-  console.log("Updated frontend/src/environments/environment.ts");
-} else {
-  console.warn("WARNING: frontend/src/environments/environment.ts not found — skipping.");
 }
 
 // ── Update smart_contract/scripts/seed-config.json ───────────────────────────
